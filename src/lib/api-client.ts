@@ -10,8 +10,19 @@ import type {
   HeatZoneSummary,
   InterventionEstimate,
   InterventionEstimateInput,
-  InterventionRecord
+  InterventionRecord,
+  RiskLevel
 } from './types'
+
+// Shared color scale for risk levels — used by HeatMap markers, ZoneDetailPanel's
+// accent bar/chart line, and the map legend, so every part of the app renders the
+// same risk level with the same color.
+export const RISK_COLORS: Record<RiskLevel, string> = {
+  low: '#34D399',
+  moderate: '#FBBF24',
+  high: '#FB7A34',
+  severe: '#EF4444'
+}
 
 // In dev, requests go through the Vite proxy at /api (see vite.config.ts) so the
 // browser never needs CORS configured on the FastAPI side. In prod, point
