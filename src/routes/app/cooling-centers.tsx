@@ -58,7 +58,7 @@ export function CoolingCentersPage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
         <HeatMap
           zones={zones}
-          coolingCenters={centers.map((c) => ({ id: c.id, lat: c.lat, lng: c.lng, name: c.name }))}
+          centers={centers}
           onSelectZone={() => {}}
         />
         <div className="space-y-3">
