@@ -17,6 +17,15 @@ const RISK_BADGE: Record<RiskLevel, string> = {
   severe: 'bg-risk-severe/15 text-red-700'
 }
 
+// Same source of truth as HeatMap.tsx's RISK_COLOR — kept local since this
+// component only needs it for the accent bar / chart line, not the marker DOM.
+const RISK_ACCENT: Record<RiskLevel, string> = {
+  low: '#34D399',
+  moderate: '#FBBF24',
+  high: '#FB7A34',
+  severe: '#EF4444'
+}
+
 export function ZoneDetailPanel({
   zoneId,
   onClose
@@ -34,65 +43,93 @@ export function ZoneDetailPanel({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 12 }}
           transition={{ duration: 0.25, ease: 'easeOut' }}
-          className="rounded-2xl border border-mist-200 bg-white p-5 shadow-sm"
+          className="overflow-hidden rounded-2xl border border-mist-200 bg-white shadow-sm"
         >
           {isLoading || !zone ? (
-            <div className="animate-pulse text-sm text-ink-600">Loading zone details…</div>
+            <div className="animate-pulse p-5 text-sm text-ink-600">Loading zone details…</div>
           ) : (
             <>
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h3 className="font-display text-lg font-semibold">{zone.name}</h3>
-                  <span
-                    className={`mt-1 inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${RISK_BADGE[zone.risk_level]}`}
+              {/* Accent bar reads the zone's risk color at a glance, and
+                  transitions (not snaps) if risk_level changes on refetch. */}
+              <div
+                className="risk-color-transition h-1 w-full"
+                style={{ background: RISK_ACCENT[zone.risk_level] }}
+              />
+
+              <div className="p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="font-display text-lg font-semibold">{zone.name}</h3>
+                    <span
+                      className={`risk-color-transition mt-1 inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${RISK_BADGE[zone.risk_level]}`}
+                    >
+                      {RISK_LABEL[zone.risk_level]}
+                    </span>
+                  </div>
+                  <button
+                    onClick={onClose}
+                    className="rounded-full p-1.5 text-ink-600 hover:bg-mist-100"
+                    aria-label="Close zone detail"
                   >
-                    {RISK_LABEL[zone.risk_level]}
-                  </span>
+                    ✕
+                  </button>
                 </div>
-                <button
-                  onClick={onClose}
-                  className="rounded-full p-1 text-ink-600 hover:bg-mist-100"
-                  aria-label="Close zone detail"
-                >
-                  ✕
-                </button>
-              </div>
 
-              <div className="mt-4 grid grid-cols-3 gap-3 text-center">
-                <Stat label="Current temp" value={`${zone.current_temp_c.toFixed(1)}°C`} />
-                <Stat label="Green cover" value={`${zone.green_cover_pct.toFixed(0)}%`} />
-                <Stat
-                  label="Pop. density"
-                  value={`${Math.round(zone.population_density).toLocaleString()}/km²`}
-                />
-              </div>
+                {/* Current temp is promoted to a hero number that sits INSIDE
+                    the same card as the trend chart it's the latest point
+                    of, with the other two stats as a compact side column —
+                    one integrated reading instead of a 3-up stat grid
+                    stacked generically above an unrelated chart. */}
+                <div className="mt-5 flex gap-4">
+                  <div className="shrink-0">
+                    <p
+                      className="risk-color-transition font-mono text-4xl font-semibold leading-none"
+                      style={{ color: RISK_ACCENT[zone.risk_level] }}
+                    >
+                      {zone.current_temp_c.toFixed(1)}°
+                    </p>
+                    <p className="mt-1.5 text-xs uppercase tracking-wide text-ink-600">
+                      Current temp
+                    </p>
+                    <div className="mt-3 space-y-2 border-t border-mist-200 pt-3">
+                      <MiniStat label="Green cover" value={`${zone.green_cover_pct.toFixed(0)}%`} />
+                      <MiniStat
+                        label="Pop. density"
+                        value={`${Math.round(zone.population_density).toLocaleString()}/km²`}
+                      />
+                    </div>
+                  </div>
 
-              <div className="mt-5 h-40">
-                <p className="mb-1 text-xs font-medium uppercase tracking-wide text-ink-600">
-                  Temperature trend
-                </p>
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={zone.history}>
-                    <XAxis
-                      dataKey="timestamp"
-                      tickFormatter={(v) => new Date(v).toLocaleTimeString([], { hour: '2-digit' })}
-                      tick={{ fontSize: 11 }}
-                      stroke="#9CA3AF"
-                    />
-                    <YAxis tick={{ fontSize: 11 }} stroke="#9CA3AF" width={30} />
-                    <Tooltip
-                      labelFormatter={(v) => new Date(v as string).toLocaleString()}
-                      formatter={(v: number) => [`${v.toFixed(1)}°C`, 'Temp']}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="temp_c"
-                      stroke="#FB7A34"
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+                  <div className="min-w-0 flex-1">
+                    <p className="mb-1 text-xs font-medium uppercase tracking-wide text-ink-600">
+                      24h trend
+                    </p>
+                    <div className="h-36">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={zone.history} margin={{ top: 4, right: 4, left: -18, bottom: 0 }}>
+                          <XAxis
+                            dataKey="timestamp"
+                            tickFormatter={(v) => new Date(v).toLocaleTimeString([], { hour: '2-digit' })}
+                            tick={{ fontSize: 10 }}
+                            stroke="#9CA3AF"
+                          />
+                          <YAxis tick={{ fontSize: 10 }} stroke="#9CA3AF" width={30} />
+                          <Tooltip
+                            labelFormatter={(v) => new Date(v as string).toLocaleString()}
+                            formatter={(v: number) => [`${v.toFixed(1)}°C`, 'Temp']}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="temp_c"
+                            stroke={RISK_ACCENT[zone.risk_level]}
+                            strokeWidth={2}
+                            dot={false}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
               </div>
             </>
           )}
@@ -102,11 +139,11 @@ export function ZoneDetailPanel({
   )
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function MiniStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl bg-mist-100 py-2">
-      <p className="font-mono text-base font-semibold text-ink-900">{value}</p>
+    <div className="flex items-baseline justify-between gap-3">
       <p className="text-[11px] text-ink-600">{label}</p>
+      <p className="font-mono text-sm font-semibold text-ink-900">{value}</p>
     </div>
   )
 }
