@@ -107,6 +107,12 @@ export function HeatMap({ zones, coolingCenters = [], onSelectZone, selectedZone
       style: STYLE_URL,
       center: [0, 0],
       zoom: 11,
+      // Prevents zooming out to country-level view, where nearby zones
+      // (e.g. Yangon's townships) compress into a near-vertical cluster of
+      // dots that looks like a bug but is actually just real geography
+      // rendered at a scale too coarse to separate them. City-level zoom
+      // keeps zones visually distinct at all times.
+      minZoom: 10,
       attributionControl: false
     })
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right')
@@ -278,4 +284,22 @@ export function HeatMap({ zones, coolingCenters = [], onSelectZone, selectedZone
  *   re-centering/re-zooming the whole map on every selection (it was in the
  *   effect's dependency array), which was an additional source of visible
  *   "jump" independent of the animation bug above.
+ *
+ * ADDITIONAL FIX — dots compressing into a vertical line at low zoom
+ * ====================================================================
+ * This is a separate, unrelated issue from the drift bug above — it's not a
+ * positioning error at all. Yangon's seeded zones sit within a very small
+ * real-world area, and at country-level zoom (e.g. zoomed out to see all of
+ * Myanmar down to the Andaman Sea) that small area compresses into just a
+ * handful of screen pixels, making the zones look like they've collapsed
+ * into a line. Verifying this is a scale artifact rather than a bug: zooming
+ * back in causes the dots to spread back out to their correct distinct
+ * positions.
+ *
+ * Fix: added `minZoom: 10` to the map constructor, which prevents the user
+ * from zooming out far enough to reach that confusing country-level view in
+ * the first place. This keeps the map at a city-appropriate zoom range at
+ * all times. A more complete solution (marker clustering, where nearby
+ * points merge into a single numbered badge until zoomed in) is a valid
+ * future improvement but was out of scope for the immediate fix.
  */
