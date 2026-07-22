@@ -7,18 +7,16 @@ import { motion } from "framer-motion";
 const MAP_STYLE =
   "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
 
+// Fallback default: Yangon, used only when there's no user location AND no
+// zones at all to derive a center from.
+const DEFAULT_CENTER = { lat: 16.8, lng: 96.15 };
+
 interface Props {
   zones: HeatZoneSummary[];
   centers?: CoolingCenter[];
   selectedZoneId?: string | null;
   onSelectZone?: (id: string) => void;
-  /** The user's actual GPS location — renders as a blue "you are here" dot.
-   *  This should ONLY ever be set from navigator.geolocation, never from a
-   *  map click, so it stays fixed once known. */
   userLocation?: { lat: number; lng: number } | null;
-  /** A manually-dropped pin (e.g. from clicking the map) used as an
-   *  alternate search origin. Renders as a distinct pin marker, separate
-   *  from the GPS dot, so clicking the map never moves the blue dot. */
   pinLocation?: { lat: number; lng: number } | null;
   onMapClick?: (lat: number, lng: number) => void;
   routeTo?: { lat: number; lng: number } | null;
@@ -54,16 +52,21 @@ export function HeatMap({
   const validRouteTo =
     routeTo && Number.isFinite(routeTo.lat) && Number.isFinite(routeTo.lng) ? routeTo : null;
 
+  // IMPORTANT: do NOT average every zone's lat/lng together. Once zones span
+  // multiple distant cities (e.g. Yangon + Phoenix), the average lands
+  // somewhere geographically meaningless between them (mid-ocean) — the map
+  // would center on empty water and nothing would be visible, even though
+  // the data itself is completely correct. Instead: prefer the user's real
+  // location if known, otherwise the first zone's location, otherwise a
+  // fixed sane default.
   const center = useMemo(() => {
-    if (validZones.length === 0) return { lat: 40.7128, lng: -74.006 };
-    const lat = validZones.reduce((s, z) => s + z.centroid_lat, 0) / validZones.length;
-    const lng = validZones.reduce((s, z) => s + z.centroid_lng, 0) / validZones.length;
-    return { lat, lng };
-  }, [validZones]);
+    if (validUser) return validUser;
+    if (validZones.length > 0) {
+      return { lat: validZones[0].centroid_lat, lng: validZones[0].centroid_lng };
+    }
+    return DEFAULT_CENTER;
+  }, [validUser, validZones]);
 
-  // Fly to the user's GPS location once known. Deliberately does NOT depend
-  // on pinLocation — dropping a manual pin should never move the camera or
-  // the blue dot, only the pin marker itself.
   useEffect(() => {
     if (!validUser || !ref.current) return;
     ref.current.flyTo({ center: [validUser.lng, validUser.lat], zoom: 13, duration: 900 });
@@ -76,8 +79,6 @@ export function HeatMap({
   }, [selectedZoneId, validZones]);
 
   const [mapReady, setMapReady] = useState(false);
-  // Route line now draws from whichever origin is actually active for
-  // search — the pin if one's been dropped, otherwise the GPS location.
   const routeOrigin = validPin ?? validUser;
   const routeSvg = useMemo(() => {
     if (!routeOrigin || !validRouteTo || !ref.current || !mapReady) return null;
@@ -151,23 +152,35 @@ export function HeatMap({
         })}
 
         {validCenters.map((c) => (
-          <Marker key={c.id} latitude={c.lat} longitude={c.lng} anchor="bottom">
-            <div className="flex flex-col items-center">
-              <div
-                className="grid h-8 w-8 place-items-center rounded-full bg-cool text-black shadow-lg pulse-cool"
-                title={c.name}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M12 2v20M2 12h20M5 5l14 14M19 5L5 19" />
-                </svg>
-              </div>
+          <Marker
+            key={c.id}
+            latitude={c.lat}
+            longitude={c.lng}
+            anchor="bottom"
+          >
+            <div className="flex flex-col items-center" title={c.name}>
+              {c.type === "water_station" ? (
+                <div className="grid h-7 w-7 place-items-center rounded-full bg-sky-400 text-white shadow-lg">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C8 8 5 11.5 5 15a7 7 0 0 0 14 0c0-3.5-3-7-7-13z" />
+                  </svg>
+                </div>
+              ) : (
+                <div className="grid h-8 w-8 place-items-center rounded-full bg-cool text-black shadow-lg pulse-cool">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M12 2v20M2 12h20M5 5l14 14M19 5L5 19" />
+                  </svg>
+                </div>
+              )}
+              {c.sponsor_name && (
+                <span className="mt-0.5 rounded-full bg-white/90 px-1.5 py-0.5 text-[9px] font-medium text-ink-700 shadow-sm">
+                  Sponsored
+                </span>
+              )}
             </div>
           </Marker>
         ))}
 
-        {/* User's actual GPS location — fixed blue dot, only ever set via
-            navigator.geolocation in the parent page. Never moves on map
-            click; that's what pinLocation below is for. */}
         {validUser && (
           <Marker latitude={validUser.lat} longitude={validUser.lng} anchor="center">
             <div className="relative grid h-5 w-5 place-items-center" title="Your location">
@@ -180,9 +193,6 @@ export function HeatMap({
           </Marker>
         )}
 
-        {/* Manually-dropped pin (from clicking the map) — visually distinct
-            teardrop shape, orange/amber, so it's unmistakably NOT the blue
-            "you are here" dot. Used as an alternate search origin only. */}
         {validPin && (
           <Marker latitude={validPin.lat} longitude={validPin.lng} anchor="bottom">
             <div className="drop-in" title="Search from this point">
