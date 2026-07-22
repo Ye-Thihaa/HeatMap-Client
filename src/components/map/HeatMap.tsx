@@ -12,7 +12,14 @@ interface Props {
   centers?: CoolingCenter[];
   selectedZoneId?: string | null;
   onSelectZone?: (id: string) => void;
+  /** The user's actual GPS location — renders as a blue "you are here" dot.
+   *  This should ONLY ever be set from navigator.geolocation, never from a
+   *  map click, so it stays fixed once known. */
   userLocation?: { lat: number; lng: number } | null;
+  /** A manually-dropped pin (e.g. from clicking the map) used as an
+   *  alternate search origin. Renders as a distinct pin marker, separate
+   *  from the GPS dot, so clicking the map never moves the blue dot. */
+  pinLocation?: { lat: number; lng: number } | null;
   onMapClick?: (lat: number, lng: number) => void;
   routeTo?: { lat: number; lng: number } | null;
 }
@@ -23,6 +30,7 @@ export function HeatMap({
   selectedZoneId,
   onSelectZone,
   userLocation,
+  pinLocation,
   onMapClick,
   routeTo,
 }: Props) {
@@ -39,6 +47,10 @@ export function HeatMap({
     userLocation && Number.isFinite(userLocation.lat) && Number.isFinite(userLocation.lng)
       ? userLocation
       : null;
+  const validPin =
+    pinLocation && Number.isFinite(pinLocation.lat) && Number.isFinite(pinLocation.lng)
+      ? pinLocation
+      : null;
   const validRouteTo =
     routeTo && Number.isFinite(routeTo.lat) && Number.isFinite(routeTo.lng) ? routeTo : null;
 
@@ -49,6 +61,14 @@ export function HeatMap({
     return { lat, lng };
   }, [validZones]);
 
+  // Fly to the user's GPS location once known. Deliberately does NOT depend
+  // on pinLocation — dropping a manual pin should never move the camera or
+  // the blue dot, only the pin marker itself.
+  useEffect(() => {
+    if (!validUser || !ref.current) return;
+    ref.current.flyTo({ center: [validUser.lng, validUser.lat], zoom: 13, duration: 900 });
+  }, [validUser?.lat, validUser?.lng]);
+
   useEffect(() => {
     if (!selectedZoneId || !ref.current) return;
     const z = validZones.find((x) => x.id === selectedZoneId);
@@ -56,20 +76,23 @@ export function HeatMap({
   }, [selectedZoneId, validZones]);
 
   const [mapReady, setMapReady] = useState(false);
+  // Route line now draws from whichever origin is actually active for
+  // search — the pin if one's been dropped, otherwise the GPS location.
+  const routeOrigin = validPin ?? validUser;
   const routeSvg = useMemo(() => {
-    if (!validUser || !validRouteTo || !ref.current || !mapReady) return null;
+    if (!routeOrigin || !validRouteTo || !ref.current || !mapReady) return null;
     try {
-      const from = ref.current.project([validUser.lng, validUser.lat]);
+      const from = ref.current.project([routeOrigin.lng, routeOrigin.lat]);
       const to = ref.current.project([validRouteTo.lng, validRouteTo.lat]);
       if (![from.x, from.y, to.x, to.y].every(Number.isFinite)) return null;
       return { from, to };
     } catch {
       return null;
     }
-  }, [validUser, validRouteTo, mapReady]);
+  }, [routeOrigin, validRouteTo, mapReady]);
 
   return (
-    <div className="relative h-full w-full overflow-hidden rounded-2xl border border-border/60">
+    <div className="relative h-[calc(100vh-4rem)] w-full overflow-hidden">
       <Map
         ref={ref}
         mapStyle={MAP_STYLE}
@@ -82,6 +105,7 @@ export function HeatMap({
         {validZones.map((z) => {
           const isDanger = z.risk_level === "high" || z.risk_level === "severe";
           const isSelected = selectedZoneId === z.id;
+          const color = RISK_COLORS[z.risk_level];
           return (
             <Marker
               key={z.id}
@@ -94,25 +118,38 @@ export function HeatMap({
               }}
             >
               <button
-                className={`group relative grid h-10 w-10 place-items-center rounded-full text-[10px] font-semibold text-black transition-transform ${
-                  isSelected ? "scale-125" : "hover:scale-110"
-                } ${isDanger ? "pulse-heat" : ""}`}
-                style={{ backgroundColor: RISK_COLORS[z.risk_level] }}
+                type="button"
+                aria-label={`${z.name}, ${z.risk_level} risk, ${z.current_temp_c}°C`}
                 title={`${z.name} · ${z.current_temp_c}°C`}
+                className={`group relative grid place-items-center rounded-full transition-transform ${
+                  isSelected ? "h-7 w-7 scale-110" : "h-5 w-5 hover:scale-110"
+                }`}
               >
-                {Math.round(z.current_temp_c)}°
+                <span
+                  className="pointer-events-none absolute inset-0 rounded-full opacity-60"
+                  style={{
+                    backgroundColor: color,
+                    animation: "ambient-pulse 3s ease-in-out infinite",
+                  }}
+                />
                 {isDanger && (
-                  <span className="pointer-events-none absolute inset-0 overflow-hidden rounded-full">
-                    <span
-                      className="absolute inset-y-0 -inset-x-full block bg-gradient-to-r from-transparent via-white/40 to-transparent"
-                      style={{ animation: "shimmer 2.5s linear infinite" }}
-                    />
-                  </span>
+                  <span
+                    className="pointer-events-none absolute inset-0 rounded-full"
+                    style={{
+                      backgroundColor: color,
+                      animation: "danger-pulse 1.6s ease-out infinite",
+                    }}
+                  />
                 )}
+                <span
+                  className="relative h-full w-full rounded-full border-2 border-white/80 shadow-lg transition-transform duration-300"
+                  style={{ backgroundColor: color, transformOrigin: "center" }}
+                />
               </button>
             </Marker>
           );
         })}
+
         {validCenters.map((c) => (
           <Marker key={c.id} latitude={c.lat} longitude={c.lng} anchor="bottom">
             <div className="flex flex-col items-center">
@@ -127,9 +164,38 @@ export function HeatMap({
             </div>
           </Marker>
         ))}
+
+        {/* User's actual GPS location — fixed blue dot, only ever set via
+            navigator.geolocation in the parent page. Never moves on map
+            click; that's what pinLocation below is for. */}
         {validUser && (
           <Marker latitude={validUser.lat} longitude={validUser.lng} anchor="center">
-            <div className="h-4 w-4 rounded-full border-2 border-white bg-accent shadow-lg" />
+            <div className="relative grid h-5 w-5 place-items-center" title="Your location">
+              <span
+                className="pointer-events-none absolute inset-0 rounded-full bg-blue-500"
+                style={{ animation: "user-location-pulse 2s ease-out infinite" }}
+              />
+              <span className="relative h-3.5 w-3.5 rounded-full border-2 border-white bg-blue-500 shadow-[0_0_0_2px_rgba(59,130,246,0.4)]" />
+            </div>
+          </Marker>
+        )}
+
+        {/* Manually-dropped pin (from clicking the map) — visually distinct
+            teardrop shape, orange/amber, so it's unmistakably NOT the blue
+            "you are here" dot. Used as an alternate search origin only. */}
+        {validPin && (
+          <Marker latitude={validPin.lat} longitude={validPin.lng} anchor="bottom">
+            <div className="drop-in" title="Search from this point">
+              <svg width="28" height="36" viewBox="0 0 28 36" fill="none">
+                <path
+                  d="M14 0C6.3 0 0 6.3 0 14c0 10.5 14 22 14 22s14-11.5 14-22C28 6.3 21.7 0 14 0z"
+                  fill="#F59E0B"
+                  stroke="white"
+                  strokeWidth="1.5"
+                />
+                <circle cx="14" cy="14" r="5" fill="white" />
+              </svg>
+            </div>
           </Marker>
         )}
       </Map>
@@ -159,6 +225,30 @@ export function HeatMap({
           </div>
         ))}
       </div>
+
+      <style>{`
+        @keyframes ambient-pulse {
+          0%, 100% { transform: scale(1); opacity: 0.55; }
+          50% { transform: scale(1.6); opacity: 0.15; }
+        }
+        @keyframes danger-pulse {
+          0% { transform: scale(1); opacity: 0.7; }
+          100% { transform: scale(2.2); opacity: 0; }
+        }
+        @keyframes user-location-pulse {
+          0% { transform: scale(1); opacity: 0.5; }
+          100% { transform: scale(2.8); opacity: 0; }
+        }
+        @keyframes drop-in-bounce {
+          0% { transform: translateY(-16px); opacity: 0; }
+          60% { transform: translateY(2px); opacity: 1; }
+          100% { transform: translateY(0); opacity: 1; }
+        }
+        .drop-in {
+          transform-origin: bottom center;
+          animation: drop-in-bounce 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+      `}</style>
     </div>
   );
 }
