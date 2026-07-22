@@ -1,160 +1,136 @@
-import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react'
-import { Link } from '@tanstack/react-router'
-import { motion, useScroll } from 'framer-motion'
-
-const Hero3D = lazy(() => import('@/components/landing/Hero3D').then((m) => ({ default: m.Hero3D })))
-
-const STEPS = [
-  {
-    title: 'Live data',
-    body: 'Satellite temperature readings, green cover, and population density feed in continuously by zone.'
-  },
-  {
-    title: 'AI analysis',
-    body: 'Every zone is scored for heat risk, and every proposed intervention is estimated for cooling impact.'
-  },
-  {
-    title: 'Action',
-    body: 'Planners see exactly where to act first, and citizens see exactly where to cool off.'
-  }
-]
+import { Link } from "@tanstack/react-router";
+import { motion } from "framer-motion";
+import { Hero3D } from "@/components/hero-3d";
+import { SiteNav } from "@/components/site-nav";
+import { Activity, Brain, Sparkles, ArrowRight } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 export function LandingPage() {
-  const heroRef = useRef<HTMLDivElement>(null)
-  const scrollProgress = useRef(0)
-  const [showCanvas, setShowCanvas] = useState(false)
-
-  const { scrollYProgress } = useScroll({
-    target: heroRef,
-    offset: ['start start', 'end start']
-  })
+  const [navVisible, setNavVisible] = useState(false);
+  const heatSectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const unsubscribe = scrollYProgress.on('change', (v) => {
-      scrollProgress.current = v
-    })
-    return unsubscribe
-  }, [scrollYProgress])
-
-  // Only mount the WebGL canvas once the hero is actually visible, and stop
-  // paying its cost once the user has scrolled well past it.
-  useEffect(() => {
-    const el = heroRef.current
-    if (!el) return
-    const observer = new IntersectionObserver(([entry]) => setShowCanvas(entry.isIntersecting), {
-      threshold: 0.05
-    })
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
+    const el = heatSectionRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setNavVisible(entry.isIntersecting),
+      // triggers once the section's top has scrolled into the upper part of the viewport
+      { threshold: 0, rootMargin: "-10% 0px -70% 0px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <div className="bg-ink-950 text-mist-100">
-      <section ref={heroRef} className="relative h-[160vh]">
-        <div className="sticky top-0 flex h-screen flex-col items-center justify-center overflow-hidden">
-          <div className="absolute inset-0">
-            {showCanvas && (
-              <Suspense fallback={null}>
-                <Hero3D scrollProgress={scrollProgress} />
-              </Suspense>
-            )}
-          </div>
-          <div className="pointer-events-none relative z-10 px-6 text-center">
-            <p className="mb-3 font-mono text-xs uppercase tracking-[0.3em] text-ink-600">
-              AI Urban Heat Intelligence
-            </p>
-            <h1 className="font-display text-4xl font-semibold tracking-tight sm:text-6xl">
-              Your city is heating up.
-              <br />
-              <span className="heat-gradient-text">See where, and what to do about it.</span>
-            </h1>
-          </div>
-          <div className="pointer-events-auto relative z-10 mt-8 flex gap-3">
-            <Link
-              to="/app"
-              className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-ink-950 transition-transform hover:scale-105"
-            >
-              View live map
-            </Link>
-            <Link
-              to="/dashboard"
-              className="rounded-full border border-mist-100/30 px-6 py-3 text-sm font-semibold text-mist-100 transition-colors hover:bg-mist-100/10"
-            >
-              Enter dashboard
-            </Link>
-          </div>
-          <p className="pointer-events-none absolute bottom-8 text-xs text-ink-600">
-            Scroll — watch it heat up
+    <div>
+      <SiteNav visible={navVisible} />
+      <Hero3D />
+
+      <div ref={heatSectionRef}>
+        <Section title="The urban heat island effect isn't abstract.">
+          <p className="max-w-2xl text-lg text-slate-400">
+            Dense, low-canopy blocks run 6–10°C hotter than the neighborhoods
+            across the park. It's measurable, it's targetable, and the people
+            living through it deserve visibility and tools — not another PDF.
           </p>
+        </Section>
+      </div>
+
+      <Section title="How ThermoCity works" muted>
+        <div className="mt-6 grid gap-6 md:grid-cols-3">
+          <Step icon={<Activity />} title="Live data" body="Temperature, canopy, and density streamed per zone and refreshed continuously." index={0} />
+          <Step icon={<Brain />} title="AI analysis" body="Models rank risk, prioritize gaps, and estimate the impact of specific interventions." index={1} />
+          <Step icon={<Sparkles />} title="Action" body="Citizens find cool shelter and report gaps. Planners simulate before they spend." index={2} />
         </div>
-      </section>
+      </Section>
 
-      <section className="mx-auto max-w-3xl px-6 py-24 text-center">
-        <FadeIn>
-          <h2 className="font-display text-2xl font-semibold sm:text-3xl">
-            The urban heat island effect
-          </h2>
-          <p className="mt-4 text-ink-600">
-            Concrete and asphalt absorb and re-radiate heat, so dense city zones can run several
-            degrees hotter than surrounding areas — and it's the zones with the least green cover
-            and the highest population density that feel it most.
-          </p>
-        </FadeIn>
-      </section>
-
-      <section className="mx-auto max-w-5xl px-6 pb-28">
-        <FadeIn>
-          <h2 className="mb-10 text-center font-display text-2xl font-semibold sm:text-3xl">
-            How it works
-          </h2>
-        </FadeIn>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-          {STEPS.map((step, i) => (
-            <FadeIn key={step.title} delay={i * 0.1}>
-              <div className="h-full rounded-2xl border border-ink-800 bg-ink-900 p-6">
-                <span className="font-mono text-xs text-ink-600">Step {i + 1}</span>
-                <h3 className="mt-2 font-display text-lg font-semibold">{step.title}</h3>
-                <p className="mt-2 text-sm text-ink-600">{step.body}</p>
-              </div>
-            </FadeIn>
-          ))}
+      <Section>
+        <div className="grid gap-4 md:grid-cols-2">
+          <CTA
+            to="/citizen"
+            eyebrow="For citizens"
+            title="Find the nearest cool place — right now."
+            body="Live heat map, cooling-center directions, and one-tap reporting."
+          />
+          <CTA
+            to="/dashboard"
+            eyebrow="For planners"
+            title="Rank risk. Model interventions. Ship them."
+            body="An AI estimator tells you the °C impact before you plant a tree."
+          />
         </div>
-      </section>
+      </Section>
 
-      <section className="border-t border-ink-800 px-6 py-20 text-center">
-        <FadeIn>
-          <h2 className="font-display text-2xl font-semibold sm:text-3xl">
-            Ready to see your city's heat map?
-          </h2>
-          <div className="mt-6 flex justify-center gap-3">
-            <Link
-              to="/app"
-              className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-ink-950 transition-transform hover:scale-105"
-            >
-              View live map
-            </Link>
-          </div>
-        </FadeIn>
-      </section>
+      <footer className="border-t border-border/60 py-10 text-center text-xs text-slate-400">
+        ThermoCity · demo build · data mocked when API offline
+      </footer>
     </div>
-  )
+  );
 }
 
-function FadeIn({
+function Section({
+  title,
   children,
-  delay = 0
+  muted,
 }: {
-  children: ReactNode
-  delay?: number
+  title?: string;
+  children: React.ReactNode;
+  muted?: boolean;
 }) {
   return (
+    <section className={`px-6 py-24 ${muted ? "bg-surface/40" : ""}`}>
+      <div className="mx-auto max-w-6xl">
+        {title && (
+          <motion.h2
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            className="mb-4 font-display text-3xl font-semibold text-emerald-500 sm:text-5xl"
+          >
+            {title}
+          </motion.h2>
+        )}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ delay: 0.1 }}
+        >
+          {children}
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+function Step({ icon, title, body, index }: { icon: React.ReactNode; title: string; body: string; index: number }) {
+  return (
     <motion.div
-      initial={{ opacity: 0, y: 24 }}
+      initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-80px' }}
-      transition={{ duration: 0.5, delay }}
+      viewport={{ once: true }}
+      transition={{ delay: index * 0.12 }}
+      className="glass rounded-2xl p-6"
     >
-      {children}
+      <div className="mb-4 grid h-11 w-11 place-items-center rounded-xl bg-primary/15 text-primary">{icon}</div>
+      <h3 className="font-display text-xl font-semibold text-emerald-500">{title}</h3>
+      <p className="mt-2 text-sm text-slate-400">{body}</p>
     </motion.div>
-  )
+  );
+}
+
+function CTA({ to, eyebrow, title, body }: { to: string; eyebrow: string; title: string; body: string }) {
+  return (
+    <Link
+      to={to as never}
+      className="group glass rounded-2xl p-8 transition-transform hover:-translate-y-1"
+    >
+      <div className="text-xs uppercase tracking-widest text-primary">{eyebrow}</div>
+      <h3 className="mt-3 font-display text-2xl font-semibold text-emerald-500">{title}</h3>
+      <p className="mt-2 text-sm text-slate-400">{body}</p>
+      <div className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-primary">
+        Open <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+      </div>
+    </Link>
+  );
 }
