@@ -3,7 +3,6 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Clock, MapPin, Tag, Users, FileText, Bell } from 'lucide-react'
 import { LocationPinMap } from '../components/report/LocationPinMap'
 import { ChipGroup } from '../components/report/ChipGroup'
-import { PhotoUpload, type PhotoItem } from '../components/report/PhotoUpload'
 import { SeveritySelector } from '../components/report/SeveritySelector'
 import { MyReportsList } from '../components/report/MyReportsList'
 import { ReportConfirmation } from '../components/report/ReportConfirmation'
@@ -13,18 +12,10 @@ import {
   AFFECTED_GROUPS,
   ISSUE_CATEGORIES,
   type AffectedGroup,
-  type AiPhotoAnalysis,
   type IssueCategory,
   type MyReport,
   type Severity
 } from '../lib/report-types'
-
-const ANALYSIS_POOL: AiPhotoAnalysis[] = [
-  { surfaceTypeKey: 'photo.surfaceType.asphalt', shadeCoveragePct: 8, visibleDamage: true, suggestedUrgency: 'high' },
-  { surfaceTypeKey: 'photo.surfaceType.concretePavement', shadeCoveragePct: 35, visibleDamage: false, suggestedUrgency: 'low' },
-  { surfaceTypeKey: 'photo.surfaceType.mixedAsphaltSoil', shadeCoveragePct: 14, visibleDamage: true, suggestedUrgency: 'high' },
-  { surfaceTypeKey: 'photo.surfaceType.concrete', shadeCoveragePct: 22, visibleDamage: false, suggestedUrgency: 'medium' }
-]
 
 function Section({
   icon: Icon,
@@ -53,9 +44,6 @@ function Section({
 
 export function ReportGapPage() {
   const { lang, t } = useLanguage()
-  const [photos, setPhotos] = useState<(PhotoItem & { file: File })[]>([])
-  const [analyzing, setAnalyzing] = useState(false)
-  const [analysis, setAnalysis] = useState<AiPhotoAnalysis | null>(null)
 
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [locationVersion, setLocationVersion] = useState(0)
@@ -88,45 +76,6 @@ export function ReportGapPage() {
     return () => clearInterval(timer)
   }, [])
 
-  // Simulated AI photo analysis — runs whenever the photo count changes.
-  useEffect(() => {
-    if (photos.length === 0) {
-      setAnalyzing(false)
-      setAnalysis(null)
-      return
-    }
-    setAnalyzing(true)
-    const timeout = setTimeout(() => {
-      setAnalysis(ANALYSIS_POOL[photos.length % ANALYSIS_POOL.length])
-      setAnalyzing(false)
-    }, 1300)
-    return () => clearTimeout(timeout)
-  }, [photos.length])
-
-  // Revoke object URLs on unmount so we don't leak blob references.
-  useEffect(() => {
-    return () => {
-      photos.forEach((p) => URL.revokeObjectURL(p.previewUrl))
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  function handleAddPhotos(files: FileList) {
-    const room = 3 - photos.length
-    const additions = Array.from(files)
-      .slice(0, room)
-      .map((file) => ({ id: crypto.randomUUID(), file, previewUrl: URL.createObjectURL(file) }))
-    setPhotos((prev) => [...prev, ...additions])
-  }
-
-  function handleRemovePhoto(id: string) {
-    setPhotos((prev) => {
-      const target = prev.find((p) => p.id === id)
-      if (target) URL.revokeObjectURL(target.previewUrl)
-      return prev.filter((p) => p.id !== id)
-    })
-  }
-
   function useMyLocation() {
     if (!navigator.geolocation) {
       setGeoError(t('report.geoUnsupported'))
@@ -150,11 +99,9 @@ export function ReportGapPage() {
     )
   }
 
-  const canSubmit = photos.length > 0 && location !== null && category !== null && !submitting
+  const canSubmit = location !== null && category !== null && !submitting
 
   function resetForm() {
-    photos.forEach((p) => URL.revokeObjectURL(p.previewUrl))
-    setPhotos([])
     setLocation(null)
     setAddressText('')
     setLandmarkNote('')
@@ -179,7 +126,6 @@ export function ReportGapPage() {
       id: nextReportId(),
       category,
       severity,
-      aiUrgency: analysis?.suggestedUrgency ?? null,
       status: 'pending',
       createdAt: new Date().toISOString(),
       addressText: addressText || `${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}`
@@ -222,14 +168,6 @@ export function ReportGapPage() {
             exit={{ opacity: 0 }}
             className="space-y-4"
           >
-            <PhotoUpload
-              photos={photos}
-              onAdd={handleAddPhotos}
-              onRemove={handleRemovePhoto}
-              analyzing={analyzing}
-              analysis={analysis}
-            />
-
             <Section icon={MapPin} title={t('report.section.location')}>
               <button
                 type="button"
@@ -276,7 +214,7 @@ export function ReportGapPage() {
             </Section>
 
             <Section icon={Bell} title={t('report.section.severity')}>
-              <SeveritySelector value={severity} onChange={setSeverity} aiSuggested={analysis?.suggestedUrgency ?? null} />
+              <SeveritySelector value={severity} onChange={setSeverity} />
             </Section>
 
             <Section icon={Users} title={t('report.section.affected')} optional optionalLabel={optionalLabel}>
@@ -357,7 +295,7 @@ export function ReportGapPage() {
             >
               {submitting ? t('report.submitting') : t('report.submit')}
             </button>
-            {!canSubmit && !submitting && (photos.length === 0 || !location || !category) && (
+            {!canSubmit && !submitting && (!location || !category) && (
               <p className="text-center text-xs text-ink-500">{t('report.submitHint')}</p>
             )}
           </motion.form>

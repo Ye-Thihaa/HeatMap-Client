@@ -63,7 +63,7 @@ export interface MyReport {
   id: string
   category: IssueCategory
   severity: Severity
-  aiUrgency: Severity | null
+  aiUrgency?: Severity | null
   status: ReportStatus
   createdAt: string
   addressText: string

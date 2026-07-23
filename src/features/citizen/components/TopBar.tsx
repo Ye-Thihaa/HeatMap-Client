@@ -38,13 +38,13 @@ export function TopBar() {
               MYAN
             </button>
           </div>
-          <button
-            type="button"
+          <Link
+            to="/app/notifications"
             className="rounded-full p-2 text-ink-600 transition-colors hover:bg-mist-100 hover:text-ink-900"
             aria-label={t('topbar.notifications')}
           >
             <Bell className="h-5 w-5" />
-          </button>
+          </Link>
 
         </div>
       </div>

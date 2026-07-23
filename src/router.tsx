@@ -7,6 +7,7 @@ import { CitizenMapPage } from './features/citizen/pages/MapPage'
 import { CoolingCentersPage } from './features/citizen/pages/CoolingCentersPage'
 import { ReportGapPage } from './features/citizen/pages/ReportPage'
 import { AIPage } from './features/citizen/pages/AIPage'
+import { NotificationsPage } from './features/citizen/pages/NotificationsPage'
 import { DashboardLayout } from './features/dashboard/layout/DashboardLayout'
 import { RankingsPage } from './features/dashboard/pages/RankingsPage'
 import { CoolingGapsPage } from './features/dashboard/pages/CoolingGapsPage'
@@ -64,6 +65,12 @@ const appAiRoute = createRoute({
   component: AIPage
 })
 
+const appNotificationsRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/notifications',
+  component: NotificationsPage
+})
+
 // --- Gov dashboard ---
 const dashboardRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -97,7 +104,7 @@ const dashboardInterventionsRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
-  appRoute.addChildren([appHomeRoute, appIndexRoute, appCoolingCentersRoute, appReportRoute, appAiRoute]),
+  appRoute.addChildren([appHomeRoute, appIndexRoute, appCoolingCentersRoute, appReportRoute, appAiRoute, appNotificationsRoute]),
   dashboardRoute.addChildren([
     dashboardIndexRoute,
     dashboardCoolingGapsRoute,

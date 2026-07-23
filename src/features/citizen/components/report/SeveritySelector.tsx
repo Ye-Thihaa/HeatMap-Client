@@ -7,7 +7,7 @@ const LEVELS: Severity[] = ['low', 'medium', 'high']
 interface Props {
   value: Severity
   onChange: (value: Severity) => void
-  aiSuggested: Severity | null
+  aiSuggested?: Severity | null
 }
 
 export function SeveritySelector({ value, onChange, aiSuggested }: Props) {
