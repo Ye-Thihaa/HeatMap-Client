@@ -1,7 +1,8 @@
+import { useMemo } from 'react'
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useHeatZone } from '@/lib/queries'
-import type { RiskLevel } from '@/lib/types'
+// import { useHeatZone } from '@/lib/queries'
+import type { RiskLevel, HeatZoneDetail } from '@/lib/types'
 import { useLanguage } from '@/lib/i18n/language-context'
 
 const RISK_ACCENT: Record<RiskLevel, string> = {
@@ -11,6 +12,73 @@ const RISK_ACCENT: Record<RiskLevel, string> = {
   severe: '#EF4444'
 }
 
+// --- MOCK DATA (backend hook disabled below, remove when API is ready) ---
+// Keyed by the same zone-N ids used in CitizenMapPage's MOCK_ZONES, so
+// clicking any of the 15 mock markers resolves to matching detail data.
+type MockZoneBase = {
+  name: string
+  risk_level: RiskLevel
+  current_temp_c: number
+  green_cover_pct: number
+  population_density: number
+}
+
+const MOCK_ZONE_BASE: Record<string, MockZoneBase> = {
+  'zone-1': { name: 'Downtown Core', risk_level: 'severe', current_temp_c: 41, green_cover_pct: 8, population_density: 18400 },
+  'zone-2': { name: 'Riverside District', risk_level: 'high', current_temp_c: 37, green_cover_pct: 14, population_density: 12100 },
+  'zone-3': { name: 'Old Market Quarter', risk_level: 'moderate', current_temp_c: 33, green_cover_pct: 21, population_density: 9800 },
+  'zone-4': { name: 'Green Park Belt', risk_level: 'low', current_temp_c: 27, green_cover_pct: 46, population_density: 4200 },
+  'zone-5': { name: 'Industrial East', risk_level: 'severe', current_temp_c: 43, green_cover_pct: 4, population_density: 6100 },
+  'zone-6': { name: 'Hlaing Market', risk_level: 'high', current_temp_c: 38, green_cover_pct: 12, population_density: 15300 },
+  'zone-7': { name: 'Kandawgyi Lakeside', risk_level: 'low', current_temp_c: 28, green_cover_pct: 52, population_density: 3100 },
+  'zone-8': { name: 'Thingangyun Residential', risk_level: 'moderate', current_temp_c: 34, green_cover_pct: 19, population_density: 11200 },
+  'zone-9': { name: 'Insein Industrial Zone', risk_level: 'severe', current_temp_c: 42, green_cover_pct: 5, population_density: 5400 },
+  'zone-10': { name: 'Botataung Waterfront', risk_level: 'moderate', current_temp_c: 32, green_cover_pct: 24, population_density: 10600 },
+  'zone-11': { name: 'Mingalar Market Belt', risk_level: 'high', current_temp_c: 39, green_cover_pct: 10, population_density: 16700 },
+  'zone-12': { name: 'Shwedagon Green Ring', risk_level: 'low', current_temp_c: 26, green_cover_pct: 58, population_density: 2800 },
+  'zone-13': { name: 'North Okkalapa Blocks', risk_level: 'high', current_temp_c: 38, green_cover_pct: 13, population_density: 14100 },
+  'zone-14': { name: 'Dala Crossing', risk_level: 'moderate', current_temp_c: 33, green_cover_pct: 22, population_density: 8300 },
+  'zone-15': { name: 'Hlaing Riverside Park', risk_level: 'low', current_temp_c: 27, green_cover_pct: 49, population_density: 3600 },
+}
+
+// Deterministic-ish 24h history generator (seeded by zone id) so each zone's
+// chart looks a little different but stays stable across re-renders.
+function buildMockHistory(zoneId: string, currentTemp: number) {
+  let seed = 0
+  for (let i = 0; i < zoneId.length; i++) seed = (seed * 31 + zoneId.charCodeAt(i)) % 997
+  const points: { timestamp: string; temp_c: number }[] = []
+  const now = Date.now()
+  for (let i = 23; i >= 0; i--) {
+    const hourOffset = i
+    const wobble = Math.sin((seed + i) * 0.6) * 2.5
+    const diurnal = Math.sin(((23 - i) / 24) * Math.PI * 2 - Math.PI / 2) * 3
+    const temp = currentTemp - 3 + diurnal + wobble
+    points.push({
+      timestamp: new Date(now - hourOffset * 60 * 60 * 1000).toISOString(),
+      temp_c: Math.round(temp * 10) / 10,
+    })
+  }
+  // force the last point to exactly match current_temp_c so the chart ends
+  // where the hero number says it should
+  points[points.length - 1] = { timestamp: points[points.length - 1].timestamp, temp_c: currentTemp }
+  return points
+}
+
+function getMockZoneDetail(zoneId: string): HeatZoneDetail | null {
+  const base = MOCK_ZONE_BASE[zoneId]
+  if (!base) return null
+  return {
+    id: zoneId,
+    name: base.name,
+    risk_level: base.risk_level,
+    current_temp_c: base.current_temp_c,
+    green_cover_pct: base.green_cover_pct,
+    population_density: base.population_density,
+    history: buildMockHistory(zoneId, base.current_temp_c),
+  } as HeatZoneDetail
+}
+// --- END MOCK DATA ---
+
 export function ZoneDetailPanel({
   zoneId,
   onClose
@@ -18,7 +86,10 @@ export function ZoneDetailPanel({
   zoneId: string | null
   onClose: () => void
 }) {
-  const { data: zone, isLoading } = useHeatZone(zoneId ?? undefined)
+  // const { data: zone, isLoading } = useHeatZone(zoneId ?? undefined)
+  const zone = useMemo(() => (zoneId ? getMockZoneDetail(zoneId) : null), [zoneId])
+  const isLoading = false
+
   const { t } = useLanguage()
 
   return (

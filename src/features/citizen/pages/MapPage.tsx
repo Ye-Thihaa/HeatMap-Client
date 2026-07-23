@@ -1,12 +1,79 @@
 import { useEffect, useState } from 'react'
 import { HeatMap, type Hospital } from '../components/HeatMap'
+import type { HeatZoneSummary } from '@/lib/types'
 import { ZoneDetailPanel } from '../components/ZoneDetailPanel'
 import { LiveRiskTicker } from '../components/LiveRiskTicker'
-import { useHeatZones, useNearbyHospitals, useRouteDirections } from '@/lib/queries'
+// import { useHeatZones, useNearbyHospitals, useRouteDirections } from '@/lib/queries'
 import { useLanguage } from '@/lib/i18n/language-context'
 
+// --- MOCK DATA (backend hooks disabled below, remove when API is ready) ---
+// Shape matches HeatZoneSummary from @/lib/types: centroid_lat/centroid_lng
+// (not lat/lng), risk_level is "low" | "moderate" | "high" | "severe"
+// (not "extreme"), and current_temp_c (not temp_c).
+const MOCK_ZONES: HeatZoneSummary[] = [
+  { id: 'zone-1', name: 'Downtown Core', centroid_lat: 16.8409, centroid_lng: 96.1735, risk_level: 'severe', current_temp_c: 41 },
+  { id: 'zone-2', name: 'Riverside District', centroid_lat: 16.8035, centroid_lng: 96.1561, risk_level: 'high', current_temp_c: 37 },
+  { id: 'zone-3', name: 'Old Market Quarter', centroid_lat: 16.7789, centroid_lng: 96.1497, risk_level: 'moderate', current_temp_c: 33 },
+  { id: 'zone-4', name: 'Green Park Belt', centroid_lat: 16.8592, centroid_lng: 96.1281, risk_level: 'low', current_temp_c: 27 },
+  { id: 'zone-5', name: 'Industrial East', centroid_lat: 16.8117, centroid_lng: 96.2013, risk_level: 'severe', current_temp_c: 43 },
+  { id: 'zone-6', name: 'Hlaing Market', centroid_lat: 16.8256, centroid_lng: 96.1102, risk_level: 'high', current_temp_c: 38 },
+  { id: 'zone-7', name: 'Kandawgyi Lakeside', centroid_lat: 16.7972, centroid_lng: 96.1636, risk_level: 'low', current_temp_c: 28 },
+  { id: 'zone-8', name: 'Thingangyun Residential', centroid_lat: 16.8298, centroid_lng: 96.1857, risk_level: 'moderate', current_temp_c: 34 },
+  { id: 'zone-9', name: 'Insein Industrial Zone', centroid_lat: 16.8817, centroid_lng: 96.1012, risk_level: 'severe', current_temp_c: 42 },
+  { id: 'zone-10', name: 'Botataung Waterfront', centroid_lat: 16.7735, centroid_lng: 96.1745, risk_level: 'moderate', current_temp_c: 32 },
+  { id: 'zone-11', name: 'Mingalar Market Belt', centroid_lat: 16.8483, centroid_lng: 96.1613, risk_level: 'high', current_temp_c: 39 },
+  { id: 'zone-12', name: 'Shwedagon Green Ring', centroid_lat: 16.7983, centroid_lng: 96.1495, risk_level: 'low', current_temp_c: 26 },
+  { id: 'zone-13', name: 'North Okkalapa Blocks', centroid_lat: 16.8834, centroid_lng: 96.1802, risk_level: 'high', current_temp_c: 38 },
+  { id: 'zone-14', name: 'Dala Crossing', centroid_lat: 16.7517, centroid_lng: 96.1697, risk_level: 'moderate', current_temp_c: 33 },
+  { id: 'zone-15', name: 'Hlaing Riverside Park', centroid_lat: 16.8154, centroid_lng: 96.1288, risk_level: 'low', current_temp_c: 27 },
+] as HeatZoneSummary[]
+
+const MOCK_HOSPITALS: Hospital[] = [
+  {
+    id: 'hosp-1',
+    name: 'City General Hospital',
+    lat: 16.8206,
+    lng: 96.1445,
+    phone: '+95 1 234 5678',
+    emergency: true,
+  },
+  {
+    id: 'hosp-2',
+    name: 'Riverside Cooling Clinic',
+    lat: 16.7981,
+    lng: 96.1602,
+    phone: '+95 1 234 9012',
+  },
+  {
+    id: 'hosp-3',
+    name: 'Park Belt Medical Center',
+    lat: 16.8544,
+    lng: 96.1330,
+    phone: '+95 1 234 3456',
+  },
+]
+
+const MOCK_ROUTE_GEOMETRY: [number, number][] = [
+  [96.1445, 16.8206],
+  [96.148, 16.815],
+  [96.152, 16.808],
+  [96.1561, 16.8035],
+]
+
+const MOCK_ROUTE_INFO = {
+  distance_m: 4200,
+  duration_s: 780,
+  duration_no_traffic_s: 640,
+  provider: 'osrm' as const,
+}
+// --- END MOCK DATA ---
+
 export function CitizenMapPage() {
-  const { data: zones = [], isLoading, isError } = useHeatZones()
+  // const { data: zones = [], isLoading, isError } = useHeatZones()
+  const zones = MOCK_ZONES
+  const isLoading = false
+  const isError = false
+
   const { t } = useLanguage()
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null)
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
@@ -19,13 +86,49 @@ export function CitizenMapPage() {
     provider: 'google' | 'osrm'
   } | null>(null)
 
-  const {
-    data: hospitals = [],
-    isError: hospitalsIsError,
-    error: hospitalsError,
-    isLoading: hospitalsLoading
-  } = useNearbyHospitals(userLocation?.lat, userLocation?.lng, 15)
-  const routeMutation = useRouteDirections()
+  // const {
+  //   data: hospitals = [],
+  //   isError: hospitalsIsError,
+  //   error: hospitalsError,
+  //   isLoading: hospitalsLoading
+  // } = useNearbyHospitals(userLocation?.lat, userLocation?.lng, 15)
+  const hospitals = MOCK_HOSPITALS
+  const hospitalsIsError = false
+  const hospitalsError = null
+  const hospitalsLoading = false
+
+  // const routeMutation = useRouteDirections()
+  // Mocked mutation-shaped object so the rest of the component (which calls
+  // routeMutation.mutate / .isPending) doesn't need to change.
+  const routeMutation = {
+    isPending: false,
+    mutate: (
+      _vars: {
+        origin_lat: number
+        origin_lng: number
+        dest_lat: number
+        dest_lng: number
+      },
+      opts?: {
+        onSuccess?: (data: {
+          geometry: { coordinates: [number, number][] }
+          distance_m: number
+          duration_s: number
+          duration_no_traffic_s: number | null
+          provider: 'google' | 'osrm'
+        }) => void
+        onError?: (err: unknown) => void
+      }
+    ) => {
+      // simulate a quick network delay then resolve with mock route data
+      setTimeout(() => {
+        opts?.onSuccess?.({
+          geometry: { coordinates: MOCK_ROUTE_GEOMETRY },
+          ...MOCK_ROUTE_INFO,
+        })
+      }, 300)
+    },
+  }
 
   // --- Debug logging ---
   useEffect(() => {
@@ -33,7 +136,7 @@ export function CitizenMapPage() {
   }, [userLocation])
 
   useEffect(() => {
-    console.log('[CitizenMapPage] hospitals query:', {
+    console.log('[CitizenMapPage] hospitals query (mocked):', {
       loading: hospitalsLoading,
       isError: hospitalsIsError,
       error: hospitalsError,
@@ -70,7 +173,7 @@ export function CitizenMapPage() {
       setRouteInfo(null)
       return
     }
-    console.log('[CitizenMapPage] requesting route:', { from: userLocation, to: selectedHospital })
+    console.log('[CitizenMapPage] requesting route (mocked):', { from: userLocation, to: selectedHospital })
     routeMutation.mutate(
       {
         origin_lat: userLocation.lat,
@@ -80,7 +183,7 @@ export function CitizenMapPage() {
       },
       {
         onSuccess: (data) => {
-          console.log('[CitizenMapPage] route result:', data)
+          console.log('[CitizenMapPage] route result (mocked):', data)
           setRouteGeometry(data.geometry.coordinates)
           setRouteInfo({
             distance_m: data.distance_m,
