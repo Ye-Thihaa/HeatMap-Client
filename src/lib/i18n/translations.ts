@@ -323,5 +323,12 @@ export const translations: Record<string, Dict> = {
   'ai.comingSoon': {
     en: 'AI-powered analysis dashboard coming soon.',
     mm: 'AI ဖြင့် ခွဲခြမ်းစိတ်ဖြာသည့် ဒက်ရှ်ဘုတ် မကြာမီ လာမည်။'
+  },
+
+  // Notifications page
+  'notifications.title': { en: 'Notifications', mm: 'အသိပေးချက်များ' },
+  'notifications.subtitle': {
+    en: 'Stay informed about heat alerts and updates.',
+    mm: 'အပူရှိန်သတိပေးချက်များနှင့် အပ်ဒိတ်များကို သိရှိပါစေ။'
   }
 }
