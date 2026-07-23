@@ -33,6 +33,8 @@ interface Props {
   selectedZoneId?: string | null;
   onSelectZone?: (id: string) => void;
   onSelectHospital?: (hospital: Hospital) => void;
+  onSelectUserLocation?: () => void;
+  onSelectCenter?: (center: CoolingCenter) => void;
   userLocation?: { lat: number; lng: number } | null;
   pinLocation?: { lat: number; lng: number } | null;
   onMapClick?: (lat: number, lng: number) => void;
@@ -52,6 +54,8 @@ export function HeatMap({
   selectedZoneId,
   onSelectZone,
   onSelectHospital,
+  onSelectUserLocation,
+  onSelectCenter,
   userLocation,
   pinLocation,
   onMapClick,
@@ -222,16 +226,25 @@ export function HeatMap({
             latitude={c.lat}
             longitude={c.lng}
             anchor="bottom"
+            onClick={(e) => {
+              e.originalEvent.stopPropagation();
+              onSelectCenter?.(c);
+            }}
           >
-            <div className="flex flex-col items-center" title={c.name}>
+            <button
+              type="button"
+              className="flex flex-col items-center"
+              title={c.name}
+              aria-label={c.name}
+            >
               {c.type === "water_station" ? (
-                <div className="grid h-7 w-7 place-items-center rounded-full bg-sky-400 text-white shadow-lg">
+                <div className="grid h-7 w-7 place-items-center rounded-full bg-sky-400 text-white shadow-lg transition-transform hover:scale-110">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 2C8 8 5 11.5 5 15a7 7 0 0 0 14 0c0-3.5-3-7-7-13z" />
                   </svg>
                 </div>
               ) : (
-                <div className="grid h-8 w-8 place-items-center rounded-full bg-safe text-black shadow-lg animate-pulse">
+                <div className="grid h-8 w-8 place-items-center rounded-full bg-safe text-black shadow-lg animate-pulse transition-transform hover:scale-110">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <path d="M12 2v20M2 12h20M5 5l14 14M19 5L5 19" />
                   </svg>
@@ -242,7 +255,7 @@ export function HeatMap({
                   {t("map.sponsored")}
                 </span>
               )}
-            </div>
+            </button>
           </Marker>
         ))}
 
@@ -282,14 +295,34 @@ export function HeatMap({
         ))}
 
         {validUser && (
-          <Marker latitude={validUser.lat} longitude={validUser.lng} anchor="center">
-            <div className="relative grid h-5 w-5 place-items-center" title={t("map.yourLocation")}>
+          <Marker
+            latitude={validUser.lat}
+            longitude={validUser.lng}
+            anchor="center"
+            onClick={(e) => {
+              e.originalEvent.stopPropagation();
+              onSelectUserLocation?.();
+            }}
+          >
+            {/* Clickable "you are here" pin — tapping it shows the current
+                temp/risk status of the nearest monitored zone to the user's
+                real location. Kept as a small button (not a large hit
+                area) so it doesn't create a big dead-zone over nearby zone
+                or hospital markers; the pulsing rings stay
+                pointer-events-none so only the solid center dot is
+                actually clickable. */}
+            <button
+              type="button"
+              className="relative grid h-5 w-5 place-items-center"
+              title={t("map.yourLocation")}
+              aria-label={t("map.yourLocation")}
+            >
               <span
                 className="pointer-events-none absolute inset-0 rounded-full bg-blue-500"
                 style={{ animation: "user-location-pulse 2s ease-out infinite" }}
               />
               <span className="relative h-3.5 w-3.5 rounded-full border-2 border-white bg-blue-500 shadow-[0_0_0_2px_rgba(59,130,246,0.4)]" />
-            </div>
+            </button>
           </Marker>
         )}
 

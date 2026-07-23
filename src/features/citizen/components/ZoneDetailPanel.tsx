@@ -1,7 +1,6 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { motion, AnimatePresence } from 'framer-motion'
-// import { useHeatZone } from '@/lib/queries'
 import type { RiskLevel, HeatZoneDetail } from '@/lib/types'
 import { useLanguage } from '@/lib/i18n/language-context'
 
@@ -12,7 +11,11 @@ const RISK_ACCENT: Record<RiskLevel, string> = {
   severe: '#EF4444'
 }
 
-// --- MOCK DATA (backend hook disabled below, remove when API is ready) ---
+// Same base URL your other live calls (/hospitals/nearby, /route/directions)
+// already hit. Adjust if your backend runs somewhere other than localhost:8000.
+const API_BASE_URL = 'http://localhost:8000'
+
+// --- MOCK DATA (used when dataMode === 'mock') ---
 // Keyed by the same zone-N ids used in CitizenMapPage's MOCK_ZONES, so
 // clicking any of the 15 mock markers resolves to matching detail data.
 type MockZoneBase = {
@@ -81,14 +84,62 @@ function getMockZoneDetail(zoneId: string): HeatZoneDetail | null {
 
 export function ZoneDetailPanel({
   zoneId,
-  onClose
+  onClose,
+  dataMode = 'mock',
 }: {
   zoneId: string | null
   onClose: () => void
+  dataMode?: 'mock' | 'live'
 }) {
-  // const { data: zone, isLoading } = useHeatZone(zoneId ?? undefined)
-  const zone = useMemo(() => (zoneId ? getMockZoneDetail(zoneId) : null), [zoneId])
-  const isLoading = false
+  const isLive = dataMode === 'live'
+
+  const [liveZone, setLiveZone] = useState<HeatZoneDetail | null>(null)
+  const [liveLoading, setLiveLoading] = useState(false)
+  const [liveError, setLiveError] = useState<string | null>(null)
+
+  // Fetch real zone detail from GET /heat-zones/{zone_id} whenever we're in
+  // live mode and a zone is selected. Aborts stale requests if the user
+  // clicks a different zone (or closes the panel) before the fetch finishes,
+  // so a slow earlier response can't overwrite a newer selection.
+  useEffect(() => {
+    if (!isLive || !zoneId) {
+      setLiveZone(null)
+      setLiveError(null)
+      setLiveLoading(false)
+      return
+    }
+
+    const controller = new AbortController()
+    setLiveLoading(true)
+    setLiveError(null)
+
+    console.log('[ZoneDetailPanel] fetching live zone detail:', zoneId)
+    fetch(`${API_BASE_URL}/heat-zones/${zoneId}`, { signal: controller.signal })
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        return res.json()
+      })
+      .then((data: HeatZoneDetail) => {
+        console.log('[ZoneDetailPanel] live zone detail result:', data)
+        setLiveZone(data)
+      })
+      .catch((err) => {
+        if (controller.signal.aborted) return
+        console.error('[ZoneDetailPanel] live zone detail fetch failed:', err)
+        setLiveError('Could not load zone details.')
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLiveLoading(false)
+      })
+
+    return () => controller.abort()
+  }, [isLive, zoneId])
+
+  const mockZone = useMemo(() => (zoneId ? getMockZoneDetail(zoneId) : null), [zoneId])
+
+  const zone = isLive ? liveZone : mockZone
+  const isLoading = isLive ? liveLoading : false
+  const error = isLive ? liveError : null
 
   const { t } = useLanguage()
 
@@ -102,8 +153,12 @@ export function ZoneDetailPanel({
           transition={{ duration: 0.25, ease: 'easeOut' }}
           className="overflow-hidden rounded-2xl border border-mist-200 bg-white shadow-sm"
         >
-          {isLoading || !zone ? (
+          {isLoading ? (
             <div className="animate-pulse p-5 text-sm text-ink-600">{t('zone.loading')}</div>
+          ) : error ? (
+            <div className="p-5 text-sm text-red-600">{error}</div>
+          ) : !zone ? (
+            <div className="p-5 text-sm text-ink-600">No data available for this zone.</div>
           ) : (
             <>
               {/* Accent bar reads the zone's risk color at a glance, and
