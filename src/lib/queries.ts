@@ -7,6 +7,7 @@ import type {
   InterventionEstimate,
   InterventionEstimateInput
 } from './types'
+import type { AssistantMessageInput, RouteDirectionsInput } from './api-client'
 
 // --- Query keys, centralized so invalidation stays consistent ---
 export const qk = {
@@ -14,6 +15,8 @@ export const qk = {
   heatZone: (id: string) => ['heat-zones', id] as const,
   coolingCentersNearby: (lat: number, lng: number, radiusKm: number) =>
     ['cooling-centers', 'nearby', lat, lng, radiusKm] as const,
+  hospitalsNearby: (lat: number, lng: number, radiusKm: number) =>
+    ['hospitals', 'nearby', lat, lng, radiusKm] as const,
   dashboardRankings: ['dashboard', 'rankings'] as const,
   coolingGapPriorities: ['dashboard', 'cooling-gaps'] as const,
   coolingGapReports: (status?: CoolingGapStatus) =>
@@ -50,6 +53,39 @@ export function useNearbyCoolingCenters(
     queryKey: qk.coolingCentersNearby(lat ?? 0, lng ?? 0, radiusKm),
     queryFn: () => api.getNearbyCoolingCenters(lat as number, lng as number, radiusKm),
     enabled: lat !== undefined && lng !== undefined
+  })
+}
+
+export function useNearbyHospitals(
+  lat: number | undefined,
+  lng: number | undefined,
+  radiusKm = 5
+) {
+  // Round to ~100m precision — hospital search doesn't need GPS-jitter
+  // precision, and this prevents tiny location fluctuations (or an
+  // upstream watchPosition somewhere) from spamming Overpass with a new
+  // request on every micro-movement.
+  const roundedLat = lat !== undefined ? Math.round(lat * 1000) / 1000 : undefined
+  const roundedLng = lng !== undefined ? Math.round(lng * 1000) / 1000 : undefined
+
+  return useQuery({
+    queryKey: qk.hospitalsNearby(roundedLat ?? 0, roundedLng ?? 0, radiusKm),
+    queryFn: () => api.getNearbyHospitals(roundedLat as number, roundedLng as number, radiusKm),
+    enabled: roundedLat !== undefined && roundedLng !== undefined,
+    // hospital locations don't change minute-to-minute — no need to poll
+    staleTime: 10 * 60_000
+  })
+}
+
+export function useRouteDirections() {
+  return useMutation({
+    mutationFn: (input: RouteDirectionsInput) => api.getRouteDirections(input)
+  })
+}
+
+export function useAssistantMessage() {
+  return useMutation({
+    mutationFn: (input: AssistantMessageInput) => api.sendAssistantMessage(input)
   })
 }
 
