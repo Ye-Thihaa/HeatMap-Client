@@ -39,6 +39,7 @@ export const translations: Record<string, Dict> = {
   'home.outlook': { en: "Today's outlook", mm: 'ယနေ့ ခန့်မှန်းချက်' },
   'home.aiTag': { en: 'AI', mm: 'AI' },
   'home.riskIndex': { en: 'Heat Risk Index', mm: 'အပူရှိန်အန္တရာယ် ညွှန်းကိန်း' },
+  'home.todayRange': { en: '24h temperature range', mm: '၂၄ နာရီ အပူချိန်အကွာအဝေး' },
   'home.zonesAtRisk': { en: 'Zones at Risk', mm: 'အန္တရာယ်ရှိသော နေရာများ' },
   'home.ofTrackedZones': {
     en: 'of {{count}} tracked zones',
@@ -116,6 +117,9 @@ export const translations: Record<string, Dict> = {
   'zone.greenCover': { en: 'Green cover', mm: 'စိမ်းလန်းမှု ဖုံးအုပ်မှု' },
   'zone.popDensity': { en: 'Pop. density', mm: 'လူဦးရေ သိပ်သည်းမှု' },
   'zone.trend24h': { en: '24h trend', mm: '၂၄ နာရီ လမ်းကြောင်း' },
+  'zone.noData': { en: 'No data available for this zone.', mm: 'ဤနေရာအတွက် ဒေတာမရှိပါ။' },
+  'zone.loadError': { en: 'Could not load zone details.', mm: 'နေရာအသေးစိတ်ကို ဖွင့်၍မရပါ။' },
+  'zone.tempLabel': { en: 'Temp', mm: 'အပူချိန်' },
 
   // Cooling centers page
   'cooling.filter.all': { en: 'All', mm: 'အားလုံး' },

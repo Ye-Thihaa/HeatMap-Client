@@ -46,7 +46,7 @@ function timingAdvice(risk: RiskLevel, now: Date, lang: Lang): string {
       ? 'ယနေ့အခြေအနေက စိုးရိမ်စရာမလိုပါ — ပုံမှန်အတိုင်း ရေအလုံအလောက်သောက်ပါ။'
       : 'Conditions are manageable today — keep water on hand as usual.'
   }
-  const window = PEAK_WINDOW[risk]
+  const window = PEAK_WINDOW[risk as 'moderate' | 'high' | 'severe']
   const hour = now.getHours() + now.getMinutes() / 60
   if (hour < window.startHour) {
     return lang === 'mm'
@@ -76,16 +76,21 @@ export function generateDailySummary({
 
   const advice = timingAdvice(risk, now, lang)
 
-  if (risk === 'low') {
+  if (atRiskCount === 0) {
+    const hPart = hottest
+      ? `, with ${hottest.name} running hottest at ${Math.round(hottest.current_temp_c)}°C`
+      : ''
     return [
       lang === 'mm'
-        ? `ယနေ့သည် အပူရှိန် ${RISK_COPY_MM.low} နေ့ဖြစ်ပါသည် — ယခုအချိန် အန္တရာယ်များသောနေရာ မရှိပါ။`
-        : `Today's ${RISK_COPY.low} day for heat — no zones are flagged high risk right now.`,
-      advice
+        ? `ယနေ့သည် အပူဒဏ်အတွက် အေးမြသောနေ့ဖြစ်ပါသည် — လက်ရှိတွင် အန္တရာယ်များသော သို့မဟုတ် ပြင်းထန်သောအခြေအနေရှိသောနေရာ မရှိပါ။${hPart.replace(/^, with/, '၊')}`
+        : `There is no zone of high or severe conditions right now${hPart}.`,
+      lang === 'mm'
+        ? 'ယနေ့အခြေအနေက စိုးရိမ်စရာမလိုပါ — ပုံမှန်အတိုင်း ရေအလုံအလောက်သောက်ပါ။'
+        : 'Conditions are manageable today — keep water on hand as usual.',
     ]
   }
 
-  const window = PEAK_WINDOW[risk]
+  const peakWindow = PEAK_WINDOW[risk as 'moderate' | 'high' | 'severe']
 
   if (lang === 'mm') {
     const hottestPartMm = hottest
@@ -93,7 +98,7 @@ export function generateDailySummary({
       : ''
     return [
       `ယနေ့သည် ${RISK_COPY_MM[risk]} နေ့ဖြစ်ပါသည် — နေရာ ${zones.length} ခုအနက် ${atRiskCount} ခုသည် အန္တရာယ်များ/အလွန်အန္တရာယ်ကြီးဟု အမှတ်အသားပြုထားပါသည်${hottestPartMm}။`,
-      `အပူဆုံးကာလမှာ ${window.labelMm} ခန့်ဖြစ်နိုင်ပါသည်။`,
+      `အပူဆုံးကာလမှာ ${peakWindow.labelMm} ခန့်ဖြစ်နိုင်ပါသည်။`,
       advice
     ]
   }
@@ -103,7 +108,7 @@ export function generateDailySummary({
     : ''
   return [
     `Today's ${RISK_COPY[risk]} day — ${atRiskCount} of ${zones.length} zones are flagged high or severe${hottestPart}.`,
-    `The worst window looks like ${window.label}.`,
+    `The worst window looks like ${peakWindow.label}.`,
     advice
   ]
 }

@@ -13,6 +13,8 @@ export interface HeatRiskNotification {
   created_at: string
   read: boolean
   is_demo?: boolean
+  is_tip?: boolean
+  tip_text?: string
 }
 
 interface NotificationsContextValue {
@@ -22,6 +24,7 @@ interface NotificationsContextValue {
   markRead: (id: string) => void
   clearAll: () => void
   loadDemoNotifications: () => void
+  addTipNotification: (tip: string) => void
 }
 
 const NotificationsContext = createContext<NotificationsContextValue | null>(null)
@@ -165,9 +168,58 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         read: true,
         is_demo: true,
       },
+      {
+        id: `demo-tip-1-${now}`,
+        zone_id: '',
+        zone_name: 'Heat Safety Assistant',
+        from_risk: '',
+        to_risk: '',
+        direction: 'up',
+        current_temp_c: null,
+        created_at: new Date(now - 10 * 60_000).toISOString(),
+        read: false,
+        is_demo: true,
+        is_tip: true,
+        tip_text: 'Just got home? Take a cool shower, drink water, and rest in a cool room for 15 minutes.',
+      },
+      {
+        id: `demo-tip-2-${now}`,
+        zone_id: '',
+        zone_name: 'Heat Safety Assistant',
+        from_risk: '',
+        to_risk: '',
+        direction: 'up',
+        current_temp_c: null,
+        created_at: new Date(now - 2 * 60 * 60_000).toISOString(),
+        read: false,
+        is_demo: true,
+        is_tip: true,
+        tip_text: 'Temperature in Downtown Core rose sharply in the last hour. Avoid outdoor activity until it cools.',
+      },
     ]
     setNotifications((current) => {
       const combined = [...demo, ...current].slice(0, MAX_STORED)
+      saveStored(combined)
+      return combined
+    })
+  }
+
+  const addTipNotification = (tip: string) => {
+    const notification: HeatRiskNotification = {
+      id: `tip-${Date.now()}`,
+      zone_id: '',
+      zone_name: 'Heat Safety Assistant',
+      from_risk: '',
+      to_risk: '',
+      direction: 'up',
+      current_temp_c: null,
+      created_at: new Date().toISOString(),
+      read: false,
+      is_tip: true,
+      tip_text: tip,
+    }
+    setNotifications((current) => {
+      const combined = [notification, ...current].slice(0, MAX_STORED)
       saveStored(combined)
       return combined
     })
@@ -177,7 +229,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
   return (
     <NotificationsContext.Provider
-      value={{ notifications, unreadCount, markAllRead, markRead, clearAll, loadDemoNotifications }}
+      value={{ notifications, unreadCount, markAllRead, markRead, clearAll, loadDemoNotifications, addTipNotification }}
     >
       {children}
     </NotificationsContext.Provider>
@@ -191,6 +243,7 @@ const FALLBACK_VALUE: NotificationsContextValue = {
   markRead: () => {},
   clearAll: () => {},
   loadDemoNotifications: () => {},
+  addTipNotification: () => {},
 }
 
 let warnedMissingProvider = false
