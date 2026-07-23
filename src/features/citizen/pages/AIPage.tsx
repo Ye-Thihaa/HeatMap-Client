@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Send, MapPin, Sparkles, User, Thermometer, Trees } from 'lucide-react'
 import { useLanguage } from '@/lib/i18n/language-context'
 import { api } from '@/lib/api-client'
+import { useNotifications } from '@/lib/notifications-context'
 
 type ZoneContext = {
   name: string
@@ -38,6 +39,7 @@ const riskStyles: Record<string, string> = {
 
 export function AIPage() {
   const { lang } = useLanguage()
+  const { addTipNotification } = useNotifications()
   const [messages, setMessages] = useState<Msg[]>([])
   const [input, setInput] = useState('')
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null)
@@ -101,6 +103,8 @@ export function AIPage() {
       )
       setZoneContext(zone_context)
       setMessages([{ role: 'assistant', text: reply }])
+      // Proactive tip notification after first greeting
+      setTimeout(() => addTipNotification('Just got home from outside? Take a cool shower, drink water, and rest in a cool room for 15 minutes.'), 2000)
     } catch {
       setMessages([
         {
@@ -201,7 +205,7 @@ export function AIPage() {
       </div>
 
       {/* Input */}
-      <div className="border-t border-mist-200 p-4">
+      <div className="border-t border-mist-200 px-4 py-3 pb-6">
         <div className="flex items-center gap-2">
           <input
             value={input}

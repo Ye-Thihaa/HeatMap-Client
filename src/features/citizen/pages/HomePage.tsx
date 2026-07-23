@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { useEffect, useMemo, useState } from 'react'
-import { Thermometer, Sun, AlertTriangle } from 'lucide-react'
+import { Thermometer, Sun, Moon, AlertTriangle, MapPin, Clock } from 'lucide-react'
+import { Line, LineChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts'
 import { useHeatZones } from '@/lib/queries'
 import type { HeatZoneSummary, RiskLevel } from '@/lib/types'
 import { useLanguage } from '@/lib/i18n/language-context'
@@ -91,12 +92,31 @@ export function CitizenHomePage() {
   const meta = riskMeta[risk]
   const dateLocale = lang === 'mm' ? 'my-MM' : undefined
   const timeLabel = now.toLocaleTimeString(dateLocale, { hour: 'numeric', minute: '2-digit' })
-  const dateLabel = now.toLocaleDateString(dateLocale, { month: 'short', day: 'numeric', year: 'numeric' })
+  const isDay = now.getHours() >= 6 && now.getHours() < 18
+  const dateLabel = lang === 'mm'
+    ? `${now.getDate()} ${['ဇန်နဝါရီ','ဖေဖော်ဝါရီ','မတ်','ဧပြီ','မေ','ဇွန်','ဇူလိုင်','ဩဂုတ်','စက်တင်ဘာ','အောက်တိုဘာ','နိုဝင်ဘာ','ဒီဇင်ဘာ'][now.getMonth()]} ${now.getFullYear()}`
+    : now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 
   const dailySummary = useMemo(
     () => generateDailySummary({ zones, risk, avgTemp, hottest, atRiskCount, now, lang }),
     [zones, risk, avgTemp, hottest, atRiskCount, now, lang]
   )
+
+  const hourlyData = useMemo(() => {
+    if (avgTemp === null) return []
+    return Array.from({ length: 24 }, (_, i) => {
+      const hour = i
+      const diurnal = Math.sin(((hour - 5) / 24) * Math.PI * 2) * 3
+      const wobble = Math.sin(hour * 0.8) * 0.8
+      return {
+        hour: `${hour}:00`,
+        temp: Math.round((avgTemp + diurnal + wobble) * 10) / 10,
+      }
+    })
+  }, [avgTemp])
+
+  const minTemp = Math.min(...hourlyData.map(d => d.temp))
+  const maxTemp = Math.max(...hourlyData.map(d => d.temp))
 
   return (
     <div className="mx-auto max-w-lg space-y-5 px-5 py-6">
@@ -114,7 +134,7 @@ export function CitizenHomePage() {
             <p className="mt-1 text-sm font-medium">{t('home.heatRisk', { level: t(meta.labelKey) })}</p>
           </div>
           <div className="grid h-14 w-14 flex-shrink-0 place-items-center rounded-2xl bg-white/15 backdrop-blur">
-            <Sun className="h-7 w-7" />
+            {isDay ? <Sun className="h-7 w-7" /> : <Moon className="h-7 w-7" />}
           </div>
         </div>
 
@@ -124,9 +144,9 @@ export function CitizenHomePage() {
         </div>
 
         {hottest && (
-          <p className="relative z-10 mt-4 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-0.5 text-[10px] font-medium backdrop-blur">
-            <Thermometer className="h-3 w-3" />
-            Hottest right now: <strong>Sule</strong>, Yangon · {Math.round(hottest.current_temp_c)}°C
+          <p className="relative z-10 mt-4 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-medium backdrop-blur">
+            <Thermometer className="h-3.5 w-3.5" />
+            {lang === 'mm' ? 'လက်ရှိ အပူဆုံးနေရာ' : 'Hottest right now'}: <strong>{hottest.name}</strong> · {Math.round(hottest.current_temp_c)}°C
           </p>
         )}
       </div>
@@ -147,24 +167,39 @@ export function CitizenHomePage() {
       </div>
 
       {/* AI daily summary */}
-      <div className="rounded-2xl border border-mist-200 bg-white p-5 shadow-sm">
-        <div className="flex items-center gap-1.5">
-          <SparklesIcon />
-          <p className="text-sm font-semibold text-ink-900">{t('home.outlook')}</p>
-          <span className="rounded-full bg-ink-900 px-2 py-0.5 text-[10px] font-medium text-white">
-            {t('home.aiTag')}
-          </span>
-        </div>
-        {dailySummary ? (
-          <ul className="mt-2 space-y-1.5">
-            {dailySummary.map((item, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm leading-relaxed text-ink-700">
-                <span className="mt-[7px] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-ink-300" />
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        ) : (
+          <div className="rounded-2xl border border-mist-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-1.5">
+              <SparklesIcon />
+              <p className="text-sm font-semibold text-ink-900">{t('home.outlook')}</p>
+              <span className="rounded-full bg-ink-900 px-2 py-0.5 text-[10px] font-medium text-white">
+                {t('home.aiTag')}
+              </span>
+            </div>
+            {dailySummary ? (
+              <ul className="mt-2 space-y-2.5">
+                {dailySummary.map((item, i) => (
+                  <li key={i} className="flex items-start gap-2.5 text-sm leading-relaxed text-ink-700">
+                    <span className="mt-[7px] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-ink-300" />
+                    <span>
+                        {zones.length > 0
+                          ? item.split(/(\b(?:Downtown Core|Riverside District|Old Market Quarter|Green Park Belt|Industrial East|Hlaing Market|Kandawgyi Lakeside|Thingangyun Residential|Insein Industrial Zone|Botataung Waterfront|Mingalar Market Belt|Shwedagon Green Ring|North Okkalapa Blocks|Dala Crossing|Hlaing Riverside Park|Kamayut Township|Insein Township|Hlaing Township|Thingangyun Township|Dagon Seikkan|Mingalar Taung Nyunt|Bahan Township|Downtown Yangon|Seikkyi Khanaungto Township)\b)/g).map((part, j) => {
+                              const isZone = zones.some(z => z.name === part)
+                              return isZone ? (
+                                <Link key={j} to="/app/map" className="font-semibold text-ink-900 underline underline-offset-2 decoration-mist-300 hover:decoration-emerald-500">
+                                  {part}
+                                </Link>
+                              ) : (
+                                <span key={j}>{part}</span>
+                              )
+                            })
+                          : item
+                        }
+                      </span>
+                    </li>
+                  )
+                )}
+              </ul>
+            ) : (
           <div className="mt-2.5 space-y-1.5">
             <div className="h-3 w-full animate-pulse rounded bg-mist-100" />
             <div className="h-3 w-4/5 animate-pulse rounded bg-mist-100" />
@@ -177,6 +212,32 @@ export function CitizenHomePage() {
             <p className="text-xs font-semibold text-red-800">Heat Alert</p>
             <p className="text-xs text-red-700">Avoid outdoor activity from 12 PM – 3 PM.</p>
           </div>
+        </div>
+      </div>
+
+      {/* 24h temp range */}
+      <div className="rounded-2xl border border-mist-200 bg-white p-5 shadow-sm">
+        <div className="flex items-center gap-2 text-ink-600">
+          <Clock className="h-4 w-4" />
+          <p className="text-xs font-medium">{t('home.todayRange')}</p>
+          {avgTemp !== null && (
+            <span className="ml-auto text-xs text-ink-500">
+              {minTemp.toFixed(1)}°C – {maxTemp.toFixed(1)}°C
+            </span>
+          )}
+        </div>
+        <div className="mt-3 h-40">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={hourlyData} margin={{ top: 4, right: 4, left: -18, bottom: 0 }}>
+              <XAxis dataKey="hour" tick={{ fontSize: 10 }} stroke="#9CA3AF" interval={3} />
+              <YAxis tick={{ fontSize: 10 }} stroke="#9CA3AF" width={30} domain={['auto', 'auto']} />
+              <Tooltip
+                formatter={(v: number) => [`${v.toFixed(1)}°C`, t('zone.tempLabel')]}
+                labelFormatter={(label) => label}
+              />
+              <Line type="monotone" dataKey="temp" stroke="#10B981" strokeWidth={2} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
@@ -208,7 +269,7 @@ export function CitizenHomePage() {
                   <span className={`grid h-8 w-8 place-items-center rounded-full ${badgeColor}`}>
                     <Thermometer className="h-4 w-4" />
                   </span>
-                  <span className="text-sm font-semibold text-ink-900">{temp}°</span>
+                  <span className="text-sm font-semibold text-ink-900">{temp}°C</span>
                 </div>
               )
             })}

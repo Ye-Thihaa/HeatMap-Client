@@ -90,6 +90,9 @@ export function ZoneDetailPanel({
 }) {
   const isLive = dataMode === 'live'
 
+  const { t, lang } = useLanguage()
+  const timeLocale = 'my-MM'
+
   const [liveZone, setLiveZone] = useState<HeatZoneDetail | null>(null)
   const [liveLoading, setLiveLoading] = useState(false)
   const [liveError, setLiveError] = useState<string | null>(null)
@@ -130,7 +133,7 @@ export function ZoneDetailPanel({
       .catch((err) => {
         if (controller.signal.aborted) return
         console.error('[ZoneDetailPanel] live zone detail fetch failed:', err)
-        setLiveError('Could not load zone details.')
+        setLiveError(t('zone.loadError'))
       })
       .finally(() => {
         if (!controller.signal.aborted) setLiveLoading(false)
@@ -144,8 +147,6 @@ export function ZoneDetailPanel({
   const zone = isLive ? liveZone : mockZone
   const isLoading = isLive ? liveLoading : false
   const error = isLive ? liveError : null
-
-  const { t } = useLanguage()
 
   return (
     <AnimatePresence>
@@ -162,7 +163,7 @@ export function ZoneDetailPanel({
           ) : error ? (
             <div className="p-5 text-sm text-red-600">{error}</div>
           ) : !zone ? (
-            <div className="p-5 text-sm text-ink-600">No data available for this zone.</div>
+            <div className="p-5 text-sm text-ink-600">{t('zone.noData')}</div>
           ) : (
             <>
               {/* Accent bar reads the zone's risk color at a glance, and
@@ -197,7 +198,7 @@ export function ZoneDetailPanel({
                       className="risk-color-transition font-mono text-4xl font-semibold leading-none"
                       style={{ color: RISK_ACCENT[zone.risk_level] }}
                     >
-                      {zone.current_temp_c.toFixed(1)}°
+                      {zone.current_temp_c.toFixed(1)}°C
                     </p>
                     <p className="mt-1.5 text-xs uppercase tracking-wide text-ink-600">
                       {t('zone.currentTemp')}
@@ -217,17 +218,17 @@ export function ZoneDetailPanel({
                     </p>
                     <div className="h-36">
                       <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={zone.history} margin={{ top: 4, right: 4, left: -18, bottom: 0 }}>
+                        <LineChart data={zone.history} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
                           <XAxis
                             dataKey="timestamp"
-                            tickFormatter={(v) => new Date(v).toLocaleTimeString([], { hour: '2-digit' })}
+                            tickFormatter={(v) => new Date(v).toLocaleTimeString(lang === 'mm' ? 'my-MM' : [], { hour: '2-digit' })}
                             tick={{ fontSize: 10 }}
                             stroke="#9CA3AF"
                           />
                           <YAxis tick={{ fontSize: 10 }} stroke="#9CA3AF" width={30} />
                           <Tooltip
-                            labelFormatter={(v) => new Date(v as string).toLocaleString()}
-                            formatter={(v: number) => [`${v.toFixed(1)}°C`, 'Temp']}
+                            labelFormatter={(v) => new Date(v as string).toLocaleString(lang === 'mm' ? 'my-MM' : [])}
+                            formatter={(v: number) => [`${v.toFixed(1)}°C`, t('zone.tempLabel')]}
                           />
                           <Line
                             type="monotone"
