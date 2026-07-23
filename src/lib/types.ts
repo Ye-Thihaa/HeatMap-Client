@@ -25,6 +25,8 @@ export interface HeatZoneDetail extends HeatZoneSummary {
   history: HeatZoneHistoryPoint[]
 }
 
+export type CoolingCenterType = 'cooling_center' | 'water_station'
+
 export interface CoolingCenter {
   id: string
   name: string
@@ -34,6 +36,8 @@ export interface CoolingCenter {
   hours: string
   capacity: number
   contact: string
+  type: CoolingCenterType
+  sponsor_name?: string | null
 }
 
 export type CoolingGapCategory =
@@ -44,11 +48,13 @@ export type CoolingGapCategory =
   | 'other'
 
 export type CoolingGapStatus =
+  | 'pending'
+  | 'in_progress'
   | 'submitted'
-  | 'under_review'
-  | 'action_planned'
-  | 'resolved'
-  | 'dismissed'
+  | 'in_review'
+  | 'success'
+  | 'failed'
+  | 'expired'
 
 export interface CoolingGapReport {
   id: string
@@ -116,4 +122,21 @@ export interface InterventionRecord extends InterventionEstimate {
   intervention_type: InterventionType
   quantity: number
   created_at: string
+}
+
+export type RouteSafetyLevel = 'safe' | 'caution' | 'risky' | 'unknown'
+
+export interface RouteSafetyInput {
+  origin_lat: number
+  origin_lng: number
+  dest_lat: number
+  dest_lng: number
+  samples?: number
+}
+
+export interface RouteSafetyResult {
+  overall_safety: RouteSafetyLevel
+  high_risk_zone_count: number
+  zones_passed: { zone_id: string; name: string; risk_level: RiskLevel }[]
+  note: string
 }

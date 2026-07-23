@@ -10,12 +10,19 @@ import type {
   HeatZoneSummary,
   InterventionEstimate,
   InterventionEstimateInput,
-  InterventionRecord
+  InterventionRecord,
+  RiskLevel,
+  RouteSafetyInput,
+  RouteSafetyResult
 } from './types'
 
-// In dev, requests go through the Vite proxy at /api (see vite.config.ts) so the
-// browser never needs CORS configured on the FastAPI side. In prod, point
-// VITE_API_BASE_URL at the deployed backend.
+export const RISK_COLORS: Record<RiskLevel, string> = {
+  low: '#34D399',
+  moderate: '#FBBF24',
+  high: '#FB7A34',
+  severe: '#EF4444'
+}
+
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ? '' : '/api'
 const API_ROOT = import.meta.env.VITE_API_BASE_URL ?? BASE_URL
 
@@ -46,17 +53,14 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export const api = {
   health: () => request<{ status: string }>('/health'),
 
-  // Heat zones
   getHeatZones: () => request<HeatZoneSummary[]>('/heat-zones'),
   getHeatZone: (id: string) => request<HeatZoneDetail>(`/heat-zones/${id}`),
 
-  // Cooling centers
   getNearbyCoolingCenters: (lat: number, lng: number, radiusKm = 5) =>
     request<CoolingCenter[]>(
       `/cooling-centers/nearby?lat=${lat}&lng=${lng}&radius_km=${radiusKm}`
     ),
 
-  // Citizen reports
   submitHeatReport: (input: HeatReportInput) =>
     request<{ id: string }>('/reports', {
       method: 'POST',
@@ -80,12 +84,10 @@ export const api = {
       body: JSON.stringify({ status })
     }),
 
-  // Dashboard
   getDashboardRankings: () => request<DashboardRankingEntry[]>('/dashboard/rankings'),
   getCoolingGapPriorities: () =>
     request<CoolingGapPriorityEntry[]>('/dashboard/cooling-gaps'),
 
-  // Interventions
   estimateIntervention: (input: InterventionEstimateInput) =>
     request<InterventionEstimate>('/interventions/estimate', {
       method: 'POST',
@@ -99,7 +101,13 @@ export const api = {
     }),
 
   getInterventionHistory: (zoneId: string) =>
-    request<InterventionRecord[]>(`/interventions/${zoneId}`)
+    request<InterventionRecord[]>(`/interventions/${zoneId}`),
+
+  checkRouteSafety: (input: RouteSafetyInput) =>
+    request<RouteSafetyResult>('/route/safety-check', {
+      method: 'POST',
+      body: JSON.stringify(input)
+    })
 }
 
 export { ApiError }
