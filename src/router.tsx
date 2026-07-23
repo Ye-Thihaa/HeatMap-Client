@@ -1,15 +1,17 @@
 import { Outlet, createRootRoute, createRoute, createRouter } from '@tanstack/react-router'
 import { RootLayout } from './components/layout/RootLayout'
-import { LandingPage } from './routes/index'
-import { CitizenLayout } from './routes/app/layout'
-import { CitizenMapPage } from './routes/app/index'
-import { CoolingCentersPage } from './routes/app/cooling-centers'
-import { ReportGapPage } from './routes/app/report'
-import { DashboardLayout } from './routes/dashboard/layout'
-import { RankingsPage } from './routes/dashboard/index'
-import { CoolingGapsPage } from './routes/dashboard/cooling-gaps'
-import { ReportQueuePage } from './routes/dashboard/queue'
-import { InterventionsPage } from './routes/dashboard/interventions'
+import { LandingPage } from './features/landing/pages/LandingPage'
+import { CitizenLayout } from './features/citizen/layout/CitizenLayout'
+import { CitizenHomePage } from './features/citizen/pages/HomePage'
+import { CitizenMapPage } from './features/citizen/pages/MapPage'
+import { CoolingCentersPage } from './features/citizen/pages/CoolingCentersPage'
+import { ReportGapPage } from './features/citizen/pages/ReportPage'
+import { AIPage } from './features/citizen/pages/AIPage'
+import { DashboardLayout } from './features/dashboard/layout/DashboardLayout'
+import { RankingsPage } from './features/dashboard/pages/RankingsPage'
+import { CoolingGapsPage } from './features/dashboard/pages/CoolingGapsPage'
+import { ReportQueuePage } from './features/dashboard/pages/ReportQueuePage'
+import { InterventionsPage } from './features/dashboard/pages/InterventionsPage'
 
 const rootRoute = createRootRoute({
   component: () => (
@@ -38,6 +40,12 @@ const appIndexRoute = createRoute({
   component: CitizenMapPage
 })
 
+const appHomeRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/home',
+  component: CitizenHomePage
+})
+
 const appCoolingCentersRoute = createRoute({
   getParentRoute: () => appRoute,
   path: '/cooling-centers',
@@ -48,6 +56,12 @@ const appReportRoute = createRoute({
   getParentRoute: () => appRoute,
   path: '/report',
   component: ReportGapPage
+})
+
+const appAiRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/ai',
+  component: AIPage
 })
 
 // --- Gov dashboard ---
@@ -83,7 +97,7 @@ const dashboardInterventionsRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
-  appRoute.addChildren([appIndexRoute, appCoolingCentersRoute, appReportRoute]),
+  appRoute.addChildren([appHomeRoute, appIndexRoute, appCoolingCentersRoute, appReportRoute, appAiRoute]),
   dashboardRoute.addChildren([
     dashboardIndexRoute,
     dashboardCoolingGapsRoute,

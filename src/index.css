@@ -65,6 +65,14 @@
   .risk-color-transition {
     transition: background-color 800ms ease, color 800ms ease, border-color 800ms ease;
   }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

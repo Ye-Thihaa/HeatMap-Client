@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Kulayo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            forest: '#1B4332',
+            leaf: '#40916C',
+            mint: '#52B788',
+            sage: '#D8F3DC',
+            cream: '#F7FBF5',
+            'heat-low': '#74C69D',
+            'heat-mid': '#F4A261',
+            'heat-high': '#E76F51',
+            'heat-extreme': '#9D0208',
+          },
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          borderRadius: { '2xl': '1rem', '3xl': '1.25rem', '4xl': '1.5rem' },
+        }
+      }
+    }
+  </script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #F7FBF5;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .phone {
+      width: 100%;
+      max-width: 415px;
+      min-height: 100vh;
+      background: #F7FBF5;
+      position: relative;
+      padding-bottom: 80px;
+    }
+    .header-curve {
+      border-radius: 0 0 28px 28px;
+    }
+    .card-shadow {
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    }
+    .hero-shadow {
+      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+    }
+    .graph-gradient {
+      background: linear-gradient(90deg, #74C69D 0%, #F4A261 40%, #E76F51 65%, #9D0208 100%);
+    }
+    .graph-line {
+      background: linear-gradient(90deg, #74C69D 0%, #F4A261 40%, #E76F51 65%, #9D0208 100%);
+      height: 3px;
+      width: 100%;
+    }
+    .peak-shade {
+      background: rgba(231, 111, 81, 0.08);
+    }
+    .tip-scroll::-webkit-scrollbar { display: none; }
+    .tip-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body>
+  <div class="phone">
+
+    <!-- ===== 1. HEADER ===== -->
+    <header class="bg-forest text-white header-curve px-6 pt-12 pb-28 relative">
+      <div class="flex items-center gap-1.5 text-sm font-medium opacity-90">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+          <circle cx="12" cy="10" r="3"/>
+        </svg>
+        <span>Quezon City</span>
+      </div>
+      <h1 class="text-2xl font-bold mt-2">Good afternoon</h1>
+    </header>
+
+    <!-- ===== 2. HERO TEMPERATURE CARD ===== -->
+    <div class="px-5 -mt-16 relative z-10">
+      <div class="bg-sage rounded-3xl p-6 hero-shadow relative">
+        <div class="flex items-start justify-between">
+          <div>
+            <div class="text-7xl font-extrabold tracking-tight text-forest leading-none">34°C</div>
+            <p class="text-base text-forest/70 mt-1 font-medium">Feels like 39°C</p>
+          </div>
+          <div class="flex items-center gap-1.5 bg-heat-high/15 text-heat-high text-xs font-semibold px-3 py-1.5 rounded-full">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path d="M12 9v4m0 4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/>
+            </svg>
+            High Risk
+          </div>
+        </div>
+        <p class="text-xs text-forest/50 mt-4">Updated 5 min ago</p>
+      </div>
+    </div>
+
+    <!-- ===== 3. AI SUMMARY STRIP ===== -->
+    <div class="px-5 mt-4">
+      <div class="bg-mint/20 rounded-2xl px-4 py-3.5 flex items-center gap-3">
+        <svg class="w-5 h-5 text-leaf shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 14 18.469V19a2 2 0 1 1-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+        </svg>
+        <p class="text-sm text-forest/80 font-medium leading-snug">
+          Heat peaks at 3PM — stay indoors and drink water.
+        </p>
+      </div>
+    </div>
+
+    <!-- ===== 4. TEMPERATURE GRAPH ===== -->
+    <section class="px-5 mt-6">
+      <h2 class="text-sm font-semibold text-forest uppercase tracking-wider mb-3">Today's Temperature</h2>
+      <div class="bg-white rounded-3xl p-5 card-shadow">
+        <div class="relative h-32">
+          <div class="peak-shade absolute top-0 bottom-0" style="left: 45%; right: 20%;"></div>
+          <svg class="w-full h-full" viewBox="0 0 300 120" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="tempGrad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#74C69D"/>
+                <stop offset="30%" stop-color="#F4A261"/>
+                <stop offset="55%" stop-color="#E76F51"/>
+                <stop offset="80%" stop-color="#9D0208"/>
+                <stop offset="100%" stop-color="#9D0208"/>
+              </linearGradient>
+              <linearGradient id="fillGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="url(#tempGrad)" stop-opacity="0.3"/>
+                <stop offset="100%" stop-color="url(#tempGrad)" stop-opacity="0.02"/>
+              </linearGradient>
+            </defs>
+            <path d="M0 80 L20 70 L45 55 L70 40 L95 25 L120 20 L145 22 L170 30 L195 40 L220 45 L245 50 L270 60 L290 70 L300 75"
+                  fill="none" stroke="url(#tempGrad)" stroke-width="2.5"/>
+            <path d="M0 80 L20 70 L45 55 L70 40 L95 25 L120 20 L145 22 L170 30 L195 40 L220 45 L245 50 L270 60 L290 70 L300 75 L300 120 L0 120 Z"
+                  fill="url(#fillGrad)"/>
+          </svg>
+          <div class="absolute inset-0 flex items-end justify-between px-1 pb-1 pointer-events-none">
+            <span class="text-[10px] text-forest/50">6AM</span>
+            <span class="text-[10px] text-forest/50">9AM</span>
+            <span class="text-[10px] text-forest/50">12PM</span>
+            <span class="text-[10px] text-forest/50 font-semibold text-heat-high">3PM</span>
+            <span class="text-[10px] text-forest/50">6PM</span>
+            <span class="text-[10px] text-forest/50">10PM</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 5. TIPS CAROUSEL ===== -->
+    <section class="px-5 mt-6">
+      <h2 class="text-sm font-semibold text-forest uppercase tracking-wider mb-3">Tips for Today</h2>
+      <div class="flex gap-3 overflow-x-auto tip-scroll -mx-5 px-5">
+        <div class="bg-sage rounded-2xl p-4 w-36 shrink-0 card-shadow">
+          <svg class="w-7 h-7 text-leaf mb-2" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"/>
+          </svg>
+          <p class="text-sm font-bold text-forest">Hydrate</p>
+          <p class="text-xs text-forest/60 mt-0.5">Drink 2L of water today</p>
+        </div>
+        <div class="bg-sage rounded-2xl p-4 w-36 shrink-0 card-shadow">
+          <svg class="w-7 h-7 text-leaf mb-2" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+            <rect x="8" y="2" width="8" height="4" rx="1"/>
+          </svg>
+          <p class="text-sm font-bold text-forest">Clothing</p>
+          <p class="text-xs text-forest/60 mt-0.5">Light cotton, light colors</p>
+        </div>
+        <div class="bg-sage rounded-2xl p-4 w-36 shrink-0 card-shadow">
+          <svg class="w-7 h-7 text-leaf mb-2" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+          </svg>
+          <p class="text-sm font-bold text-forest">Best Times</p>
+          <p class="text-xs text-forest/60 mt-0.5">Go out before 10AM</p>
+        </div>
+        <div class="bg-sage rounded-2xl p-4 w-36 shrink-0 card-shadow">
+          <svg class="w-7 h-7 text-leaf mb-2" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"/>
+            <path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+          </svg>
+          <p class="text-sm font-bold text-forest">Sun Guard</p>
+          <p class="text-xs text-forest/60 mt-0.5">SPF 50+ and a hat</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 6. 3-DAY FORECAST ===== -->
+    <section class="px-5 mt-6">
+      <h2 class="text-sm font-semibold text-forest uppercase tracking-wider mb-3">Next 3 Days</h2>
+      <div class="flex gap-3">
+        <div class="flex-1 bg-white rounded-2xl border border-sage/60 p-4 text-center">
+          <p class="text-sm font-semibold text-forest">Tomorrow</p>
+          <svg class="w-8 h-8 mx-auto my-2 text-heat-mid" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"/>
+            <path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2"/>
+          </svg>
+          <p class="text-xs font-bold text-forest">33° <span class="text-forest/50 font-normal">/ 26°</span></p>
+        </div>
+        <div class="flex-1 bg-white rounded-2xl border border-sage/60 p-4 text-center">
+          <p class="text-sm font-semibold text-forest">Sat</p>
+          <svg class="w-8 h-8 mx-auto my-2 text-heat-mid" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+          <p class="text-xs font-bold text-forest">31° <span class="text-forest/50 font-normal">/ 25°</span></p>
+        </div>
+        <div class="flex-1 bg-white rounded-2xl border border-sage/60 p-4 text-center">
+          <p class="text-sm font-semibold text-forest">Sun</p>
+          <svg class="w-8 h-8 mx-auto my-2 text-heat-high" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"/>
+            <path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2"/>
+          </svg>
+          <p class="text-xs font-bold text-forest">35° <span class="text-forest/50 font-normal">/ 27°</span></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SPACER FOR BOTTOM NAV ===== -->
+    <div class="h-6"></div>
+
+    <!-- ===== 7. BOTTOM NAVIGATION ===== -->
+    <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[415px] bg-white border-t border-sage/40 px-3 py-2 z-50">
+      <div class="flex items-center justify-around">
+        <a href="#" class="flex flex-col items-center gap-0.5 px-4 py-2 rounded-xl bg-leaf text-white">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          </svg>
+          <span class="text-[10px] font-semibold">Home</span>
+        </a>
+        <a href="#" class="flex flex-col items-center gap-0.5 px-4 py-2 rounded-xl text-forest/40">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path d="M9 20l-5.447-2.724A1 1 0 0 1 3 16.382V5.618a1 1 0 0 1 1.553-.894l5.447 2.724M9 20l5.447-2.724A1 1 0 0 0 21 16.382V5.618a1 1 0 0 0-1.553-.894L14 7.276M9 20V7.276"/>
+          </svg>
+          <span class="text-[10px] font-medium">Map</span>
+        </a>
+        <a href="#" class="flex flex-col items-center gap-0.5 px-4 py-2 rounded-xl text-forest/40">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path d="M9 12h6m-3-3v6m-7 4h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2z"/>
+          </svg>
+          <span class="text-[10px] font-medium">Report</span>
+        </a>
+        <a href="#" class="flex flex-col items-center gap-0.5 px-4 py-2 rounded-xl text-forest/40">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 14 18.469V19a2 2 0 1 1-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+          </svg>
+          <span class="text-[10px] font-medium">Assistant</span>
+        </a>
+      </div>
+    </nav>
+
+  </div>
+</body>
+</html>
