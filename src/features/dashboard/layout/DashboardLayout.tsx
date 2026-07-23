@@ -1,4 +1,5 @@
 import { Link, Outlet } from '@tanstack/react-router'
+import { BottomNav } from '@/components/layout/BottomNav'
 
 const navItems = [
   { to: '/dashboard', label: 'Rankings' },
@@ -9,7 +10,7 @@ const navItems = [
 
 export function DashboardLayout() {
   return (
-    <div className="min-h-screen bg-ink-950 text-mist-100">
+    <div className="min-h-screen bg-ink-950 text-mist-100 pb-16">
       <div className="flex">
         <aside className="hidden w-60 shrink-0 border-r border-ink-700/60 px-4 py-6 lg:block">
           <Link to="/" className="font-display text-base font-semibold tracking-tight text-white">
@@ -34,6 +35,7 @@ export function DashboardLayout() {
           <Outlet />
         </main>
       </div>
+      <BottomNav />
     </div>
   )
 }

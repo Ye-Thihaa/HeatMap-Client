@@ -1,21 +1,26 @@
 import { useState } from 'react'
 import { useCoolingGapReports, useUpdateCoolingGapReport } from '@/lib/queries'
 import type { CoolingGapStatus } from '@/lib/types'
+import { StatusBadge } from '../components/StatusBadge'
 
 const STATUSES: CoolingGapStatus[] = [
+  'pending',
+  'in_progress',
   'submitted',
-  'under_review',
-  'action_planned',
-  'resolved',
-  'dismissed'
+  'in_review',
+  'success',
+  'failed',
+  'expired'
 ]
 
 const STATUS_LABEL: Record<CoolingGapStatus, string> = {
+  pending: 'Pending',
+  in_progress: 'In progress',
   submitted: 'Submitted',
-  under_review: 'Under review',
-  action_planned: 'Action planned',
-  resolved: 'Resolved',
-  dismissed: 'Dismissed'
+  in_review: 'In review',
+  success: 'Success',
+  failed: 'Failed',
+  expired: 'Expired'
 }
 
 export function ReportQueuePage() {
@@ -69,19 +74,23 @@ export function ReportQueuePage() {
                   {new Date(r.created_at).toLocaleDateString()}
                 </td>
                 <td className="px-4 py-3">
-                  <select
-                    value={r.status}
-                    onChange={(e) =>
-                      updateStatus.mutate({ id: r.id, status: e.target.value as CoolingGapStatus })
-                    }
-                    className="rounded-md border border-ink-700 bg-ink-900 px-2 py-1 text-xs text-mist-100"
-                  >
-                    {STATUSES.map((s) => (
-                      <option key={s} value={s}>
-                        {STATUS_LABEL[s]}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="flex items-center gap-2">
+                    <StatusBadge status={r.status} />
+                    <select
+                      value={r.status}
+                      onChange={(e) =>
+                        updateStatus.mutate({ id: r.id, status: e.target.value as CoolingGapStatus })
+                      }
+                      className="rounded-md border border-ink-700 bg-ink-900 px-2 py-1 text-[11px] text-mist-100 opacity-60 hover:opacity-100"
+                      title="Change status"
+                    >
+                      {STATUSES.map((s) => (
+                        <option key={s} value={s}>
+                          {STATUS_LABEL[s]}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </td>
               </tr>
             ))}

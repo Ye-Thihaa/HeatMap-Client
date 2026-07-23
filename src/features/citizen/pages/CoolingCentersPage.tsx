@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { HeatMap } from '@/components/map/HeatMap'
-import { PeakHoursBanner } from '@/components/citizen/PeakHoursBanner'
-import { HydrationReminder } from '@/components/citizen/HydrationReminder'
-import { SOSButton } from '@/components/citizen/SOSButton'
+import { HeatMap } from '../components/HeatMap'
+import { PeakHoursBanner } from '../components/PeakHoursBanner'
+import { HydrationReminder } from '../components/HydrationReminder'
+import { SOSButton } from '../components/SOSButton'
 import { api } from '@/lib/api-client'
 import { useHeatZones, useNearbyCoolingCenters } from '@/lib/queries'
 import type { CoolingCenterType, RouteSafetyResult } from '@/lib/types'
@@ -104,14 +104,7 @@ export function CoolingCentersPage() {
     <div className="relative">
       <HeatMap
         zones={zones}
-        centers={filteredCenters.map((c) => ({
-          id: c.id,
-          lat: c.lat,
-          lng: c.lng,
-          name: c.name,
-          type: c.type,
-          sponsor_name: c.sponsor_name,
-        }))}
+        centers={filteredCenters}
         userLocation={gpsCoords}
         pinLocation={pinCoords}
         onMapClick={handleMapClick}

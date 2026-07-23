@@ -17,7 +17,7 @@ export function SiteNav({ visible = true }: { visible?: boolean }) {
           ThermoCity
         </Link>
         <nav className="flex items-center gap-6 text-sm font-medium text-white/70">
-          <Link to="/citizen" className="transition-colors hover:text-white">
+          <Link to="/app/cooling-centers" className="transition-colors hover:text-white">
             Cooling centers
           </Link>
           <Link to="/dashboard" className="transition-colors hover:text-white">

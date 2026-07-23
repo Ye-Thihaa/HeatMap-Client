@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { HeatMap } from '@/components/map/HeatMap'
-import { ZoneDetailPanel } from '@/components/map/ZoneDetailPanel'
-import { LiveRiskTicker } from '@/components/map/LiveRiskTicker'
+import { HeatMap } from '../components/HeatMap'
+import { ZoneDetailPanel } from '../components/ZoneDetailPanel'
+import { LiveRiskTicker } from '../components/LiveRiskTicker'
 import { useHeatZones } from '@/lib/queries'
 
 export function CitizenMapPage() {
@@ -10,8 +10,8 @@ export function CitizenMapPage() {
 
   return (
     // relative wrapper lets the map be the base layer, with all page UI
-    // (title, ticker, error banner, zone detail) absolutely positioned on
-    // top of it instead of pushing it down the page in normal flow.
+    // (ticker, error banner, zone detail) absolutely positioned on top of
+    // it instead of pushing it down the page in normal flow.
     <div className="relative">
       <HeatMap
         zones={zones}
@@ -19,25 +19,19 @@ export function CitizenMapPage() {
         selectedZoneId={selectedZoneId ?? undefined}
       />
 
-      {/* Top overlay: title + live risk ticker. pointer-events-none on the
-          row so clicks pass through to the map except where the actual
-          cards are (pointer-events-auto on each card). */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex flex-wrap items-start justify-between gap-3 p-5">
-        <div className="pointer-events-auto rounded-2xl bg-white/90 px-4 py-3 shadow-sm backdrop-blur">
-          <h1 className="font-display text-2xl font-semibold tracking-tight">Live heat map</h1>
-          <p className="text-sm text-ink-600">
-            Zones update automatically as new sensor data comes in.
-          </p>
-        </div>
-        {!isLoading && (
+      {/* Top overlay: live risk ticker, centered. pointer-events-none on the
+          row so clicks pass through to the map except where the badge
+          itself is (pointer-events-auto on the badge). */}
+      {!isLoading && (
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center p-5">
           <div className="pointer-events-auto">
             <LiveRiskTicker zones={zones} />
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {isError && (
-        <div className="pointer-events-none absolute inset-x-5 top-28 z-10">
+        <div className="pointer-events-none absolute inset-x-5 top-20 z-10">
           <div className="pointer-events-auto rounded-xl border border-red-200 bg-red-50/95 px-4 py-3 text-sm text-red-700 shadow-sm backdrop-blur">
             Couldn't load heat zones. Check that the API is running and reachable.
           </div>

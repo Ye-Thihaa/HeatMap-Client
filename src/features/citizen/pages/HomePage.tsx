@@ -1,0 +1,199 @@
+import { Link } from '@tanstack/react-router'
+import { useEffect, useMemo, useState } from 'react'
+import { Map, Brain, FileText, Building2, Sun, Flame, ShieldAlert, ChevronRight, Sparkles } from 'lucide-react'
+import { useHeatZones } from '@/lib/queries'
+import type { HeatZoneSummary, RiskLevel } from '@/lib/types'
+import { generateDailySummary } from '../lib/daily-summary'
+
+const quickLinks = [
+  { to: '/app', label: 'Heat Map', icon: Map, desc: 'View live zone temperatures' },
+  { to: '/app/cooling-centers', label: 'Cooling Centers', icon: Building2, desc: 'Find nearby cool spaces' },
+  { to: '/app/ai', label: 'AI Analysis', icon: Brain, desc: 'Get heat risk insights' },
+  { to: '/app/report', label: 'Report', icon: FileText, desc: 'Report a cooling gap' }
+]
+
+const riskOrder: RiskLevel[] = ['low', 'moderate', 'high', 'severe']
+
+const riskMeta: Record<RiskLevel, { label: string; text: string; bg: string; soft: string; pct: number }> = {
+  low: { label: 'Cool', text: 'text-risk-low', bg: 'bg-risk-low', soft: 'bg-risk-low/15', pct: 10 },
+  moderate: { label: 'Moderate', text: 'text-risk-moderate', bg: 'bg-risk-moderate', soft: 'bg-risk-moderate/15', pct: 40 },
+  high: { label: 'Hot', text: 'text-risk-high', bg: 'bg-risk-high', soft: 'bg-risk-high/15', pct: 70 },
+  severe: { label: 'Extreme', text: 'text-risk-severe', bg: 'bg-risk-severe', soft: 'bg-risk-severe/15', pct: 95 }
+}
+
+function cityRiskLevel(zones: HeatZoneSummary[]): RiskLevel {
+  let worst: RiskLevel = 'low'
+  for (const zone of zones) {
+    if (riskOrder.indexOf(zone.risk_level) > riskOrder.indexOf(worst)) worst = zone.risk_level
+  }
+  return worst
+}
+
+export function CitizenHomePage() {
+  const { data: zones = [], isLoading } = useHeatZones()
+
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 30_000)
+    return () => clearInterval(t)
+  }, [])
+
+  const { avgTemp, risk, hottest, atRiskCount } = useMemo(() => {
+    if (zones.length === 0) {
+      return { avgTemp: null as number | null, risk: 'low' as RiskLevel, hottest: null as HeatZoneSummary | null, atRiskCount: 0 }
+    }
+    const avg = zones.reduce((sum, z) => sum + z.current_temp_c, 0) / zones.length
+    const hottestZone = zones.reduce((a, b) => (b.current_temp_c > a.current_temp_c ? b : a))
+    const atRisk = zones.filter((z) => z.risk_level === 'high' || z.risk_level === 'severe').length
+    return { avgTemp: Math.round(avg), risk: cityRiskLevel(zones), hottest: hottestZone, atRiskCount: atRisk }
+  }, [zones])
+
+  const meta = riskMeta[risk]
+  const timeLabel = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+  const dateLabel = now.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })
+
+  const dailySummary = useMemo(
+    () => generateDailySummary({ zones, risk, avgTemp, hottest, atRiskCount, now }),
+    [zones, risk, avgTemp, hottest, atRiskCount, now]
+  )
+
+  return (
+    <div className="mx-auto max-w-lg space-y-6 px-5 py-6">
+      <div>
+        <h1 className="font-display text-2xl font-semibold tracking-tight">Welcome back</h1>
+        <p className="text-sm text-ink-600">Stay cool — here's what's happening in your city.</p>
+      </div>
+
+      {/* Hero */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-ink-900 via-risk-high to-risk-severe p-6 text-white shadow-lg">
+        <div className="pointer-events-none absolute inset-0 bg-black/10" />
+        <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
+
+        <div className="relative z-10 flex items-start justify-between">
+          <div>
+            <p className="text-sm text-white/80">Your city, right now</p>
+            <p className="mt-3 font-display text-6xl font-semibold tracking-tight">
+              {avgTemp !== null ? `${avgTemp}°` : '--'}
+            </p>
+            <p className="mt-1 text-lg font-medium">{meta.label} heat risk</p>
+          </div>
+          <div className="grid h-14 w-14 flex-shrink-0 place-items-center rounded-2xl bg-white/15 backdrop-blur">
+            <Sun className="h-7 w-7" />
+          </div>
+        </div>
+
+        <div className="relative z-10 mt-6 flex items-center justify-between text-sm text-white/80">
+          <span>{timeLabel}</span>
+          <span>{dateLabel}</span>
+        </div>
+
+        {hottest && (
+          <p className="relative z-10 mt-4 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-medium backdrop-blur">
+            <Flame className="h-3 w-3" />
+            Hottest right now: {hottest.name} · {Math.round(hottest.current_temp_c)}°C
+          </p>
+        )}
+      </div>
+
+      {/* AI daily summary */}
+      <div className="rounded-2xl border border-mist-200 bg-white p-5 shadow-sm">
+        <div className="flex items-center gap-1.5">
+          <Sparkles className="h-4 w-4 text-risk-high" />
+          <p className="text-sm font-semibold text-ink-900">Today's outlook</p>
+          <span className="rounded-full bg-ink-900 px-2 py-0.5 text-[10px] font-medium text-white">AI</span>
+        </div>
+        {dailySummary ? (
+          <p className="mt-2 text-sm leading-relaxed text-ink-700">{dailySummary}</p>
+        ) : (
+          <div className="mt-2.5 space-y-1.5">
+            <div className="h-3 w-full animate-pulse rounded bg-mist-100" />
+            <div className="h-3 w-4/5 animate-pulse rounded bg-mist-100" />
+          </div>
+        )}
+      </div>
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="rounded-2xl border border-mist-200 bg-white p-4 shadow-sm">
+          <div className="flex items-center gap-2 text-ink-600">
+            <Flame className="h-4 w-4" />
+            <p className="text-xs font-medium">Heat Risk Index</p>
+          </div>
+          <p className={`mt-2 font-display text-2xl font-semibold ${meta.text}`}>{meta.label}</p>
+          <div className="relative mt-3 h-1.5 w-full rounded-full bg-gradient-to-r from-risk-low via-risk-moderate to-risk-severe">
+            <span
+              className="absolute -top-0.5 h-2.5 w-2.5 -translate-x-1/2 rounded-full border-2 border-white bg-ink-900 shadow"
+              style={{ left: `${meta.pct}%` }}
+            />
+          </div>
+        </div>
+        <div className="rounded-2xl border border-mist-200 bg-white p-4 shadow-sm">
+          <div className="flex items-center gap-2 text-ink-600">
+            <ShieldAlert className="h-4 w-4" />
+            <p className="text-xs font-medium">Zones at Risk</p>
+          </div>
+          <p className="mt-2 font-display text-2xl font-semibold text-ink-900">{atRiskCount}</p>
+          <p className="mt-3 text-xs text-ink-600">of {zones.length} tracked zones</p>
+        </div>
+      </div>
+
+      {/* Zones strip */}
+      <div className="rounded-2xl border border-mist-200 bg-white p-4 shadow-sm">
+        <div className="flex items-center justify-between">
+          <p className="font-display text-sm font-semibold">Zones near you</p>
+          <Link to="/app" className="flex items-center gap-0.5 text-xs font-medium text-risk-high">
+            View map <ChevronRight className="h-3 w-3" />
+          </Link>
+        </div>
+        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+          {isLoading &&
+            Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="h-24 w-16 flex-shrink-0 animate-pulse rounded-xl bg-mist-100" />
+            ))}
+          {!isLoading &&
+            zones.slice(0, 8).map((zone) => {
+              const zoneMeta = riskMeta[zone.risk_level]
+              return (
+                <div
+                  key={zone.id}
+                  className="flex w-16 flex-shrink-0 flex-col items-center gap-1.5 rounded-xl bg-mist-50 py-3"
+                >
+                  <span className="w-full truncate px-1 text-center text-[11px] font-medium text-ink-600">
+                    {zone.name}
+                  </span>
+                  <span className={`grid h-8 w-8 place-items-center rounded-full ${zoneMeta.soft}`}>
+                    <Flame className={`h-4 w-4 ${zoneMeta.text}`} />
+                  </span>
+                  <span className="text-sm font-semibold text-ink-900">{Math.round(zone.current_temp_c)}°</span>
+                </div>
+              )
+            })}
+          {!isLoading && zones.length === 0 && (
+            <p className="py-3 text-xs text-ink-600">No zone data available yet.</p>
+          )}
+        </div>
+      </div>
+
+      {/* Quick actions */}
+      <div className="grid grid-cols-2 gap-3">
+        {quickLinks.map(({ to, label, icon: Icon, desc }) => (
+          <Link
+            key={to}
+            to={to}
+            className="flex flex-col gap-2 rounded-2xl border border-mist-200 bg-white p-4 shadow-sm transition-colors hover:border-mist-300"
+          >
+            <Icon className="h-5 w-5 text-ink-900" />
+            <div>
+              <p className="font-display font-semibold text-sm">{label}</p>
+              <p className="text-xs text-ink-600">{desc}</p>
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      <div className="rounded-2xl border border-dashed border-mist-200 bg-white/60 p-5 text-center text-sm text-ink-600">
+        Real-time alerts and personalized recommendations coming soon.
+      </div>
+    </div>
+  )
+}

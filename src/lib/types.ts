@@ -48,11 +48,13 @@ export type CoolingGapCategory =
   | 'other'
 
 export type CoolingGapStatus =
+  | 'pending'
+  | 'in_progress'
   | 'submitted'
-  | 'under_review'
-  | 'action_planned'
-  | 'resolved'
-  | 'dismissed'
+  | 'in_review'
+  | 'success'
+  | 'failed'
+  | 'expired'
 
 export interface CoolingGapReport {
   id: string

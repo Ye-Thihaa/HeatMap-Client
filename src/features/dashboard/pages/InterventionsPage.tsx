@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { motion } from 'framer-motion'
-import { ConfidenceGauge } from '@/components/dashboard/ConfidenceGauge'
-import { ReasoningReveal } from '@/components/dashboard/ReasoningReveal'
+import { ConfidenceGauge } from '../components/ConfidenceGauge'
+import { ReasoningReveal } from '../components/ReasoningReveal'
 import {
   useDashboardRankings,
   useEstimateIntervention,

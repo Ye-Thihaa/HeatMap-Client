@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Hero3D } from "@/components/hero-3d";
-import { SiteNav } from "@/components/site-nav";
+import { Hero3D } from "../components/Hero3D";
+import { SiteNav } from "../components/SiteNav";
 import { Activity, Brain, Sparkles, ArrowRight } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
