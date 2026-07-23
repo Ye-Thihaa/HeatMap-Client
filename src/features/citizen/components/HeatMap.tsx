@@ -2,10 +2,16 @@ import Map, { Marker, type MapRef } from "react-map-gl/maplibre";
 import { useMemo, useRef, useEffect, useState } from "react";
 import type { CoolingCenter, HeatZoneSummary } from "@/lib/types";
 import { RISK_COLORS } from "@/lib/api-client";
+import { useGreenerMapStyle } from "../lib/map-style";
+import { useLanguage } from "@/lib/i18n/language-context";
 import { motion } from "framer-motion";
 
-const MAP_STYLE =
-  "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
+const LEGEND_KEY = {
+  low: "legend.low",
+  moderate: "legend.moderate",
+  high: "legend.high",
+  severe: "legend.severe",
+} as const;
 
 // Fallback default: Yangon, used only when there's no user location AND no
 // zones at all to derive a center from.
@@ -32,6 +38,8 @@ export function HeatMap({
   onMapClick,
   routeTo,
 }: Props) {
+  const mapStyle = useGreenerMapStyle();
+  const { t } = useLanguage();
   const ref = useRef<MapRef>(null);
   const validZones = useMemo(
     () => zones.filter((z) => Number.isFinite(z.centroid_lat) && Number.isFinite(z.centroid_lng)),
@@ -96,7 +104,7 @@ export function HeatMap({
     <div className="relative h-[calc(100vh-4rem)] w-full overflow-hidden">
       <Map
         ref={ref}
-        mapStyle={MAP_STYLE}
+        mapStyle={mapStyle}
         initialViewState={{ latitude: center.lat, longitude: center.lng, zoom: 12.5 }}
         onLoad={() => setMapReady(true)}
         onClick={(e) => onMapClick?.(e.lngLat.lat, e.lngLat.lng)}
@@ -120,7 +128,11 @@ export function HeatMap({
             >
               <button
                 type="button"
-                aria-label={`${z.name}, ${z.risk_level} risk, ${z.current_temp_c}°C`}
+                aria-label={t("map.zoneMarkerAria", {
+                  name: z.name,
+                  risk: t(LEGEND_KEY[z.risk_level]),
+                  temp: z.current_temp_c,
+                })}
                 title={`${z.name} · ${z.current_temp_c}°C`}
                 className={`group relative grid place-items-center rounded-full transition-transform ${
                   isSelected ? "h-7 w-7 scale-110" : "h-5 w-5 hover:scale-110"
@@ -166,7 +178,7 @@ export function HeatMap({
                   </svg>
                 </div>
               ) : (
-                <div className="grid h-8 w-8 place-items-center rounded-full bg-cool text-black shadow-lg pulse-cool">
+                <div className="grid h-8 w-8 place-items-center rounded-full bg-safe text-black shadow-lg animate-pulse">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <path d="M12 2v20M2 12h20M5 5l14 14M19 5L5 19" />
                   </svg>
@@ -174,7 +186,7 @@ export function HeatMap({
               )}
               {c.sponsor_name && (
                 <span className="mt-0.5 rounded-full bg-white/90 px-1.5 py-0.5 text-[9px] font-medium text-ink-700 shadow-sm">
-                  Sponsored
+                  {t("map.sponsored")}
                 </span>
               )}
             </div>
@@ -183,7 +195,7 @@ export function HeatMap({
 
         {validUser && (
           <Marker latitude={validUser.lat} longitude={validUser.lng} anchor="center">
-            <div className="relative grid h-5 w-5 place-items-center" title="Your location">
+            <div className="relative grid h-5 w-5 place-items-center" title={t("map.yourLocation")}>
               <span
                 className="pointer-events-none absolute inset-0 rounded-full bg-blue-500"
                 style={{ animation: "user-location-pulse 2s ease-out infinite" }}
@@ -195,7 +207,7 @@ export function HeatMap({
 
         {validPin && (
           <Marker latitude={validPin.lat} longitude={validPin.lng} anchor="bottom">
-            <div className="drop-in" title="Search from this point">
+            <div className="drop-in" title={t("map.searchFromHere")}>
               <svg width="28" height="36" viewBox="0 0 28 36" fill="none">
                 <path
                   d="M14 0C6.3 0 0 6.3 0 14c0 10.5 14 22 14 22s14-11.5 14-22C28 6.3 21.7 0 14 0z"
@@ -217,7 +229,7 @@ export function HeatMap({
             y1={routeSvg.from.y}
             x2={routeSvg.to.x}
             y2={routeSvg.to.y}
-            stroke="var(--color-cool)"
+            stroke="#0EA5A0"
             strokeWidth="3"
             strokeDasharray="8 8"
             initial={{ pathLength: 0 }}
@@ -229,9 +241,12 @@ export function HeatMap({
 
       <div className="pointer-events-none absolute bottom-3 left-3 flex gap-2 text-xs">
         {(["low", "moderate", "high", "severe"] as const).map((r) => (
-          <div key={r} className="flex items-center gap-1.5 rounded-full glass px-2.5 py-1">
+          <div
+            key={r}
+            className="flex items-center gap-1.5 rounded-full border border-mist-200 bg-white/90 px-2.5 py-1 shadow-sm backdrop-blur"
+          >
             <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: RISK_COLORS[r] }} />
-            <span className="capitalize text-muted-foreground">{r}</span>
+            <span className="text-ink-600">{t(LEGEND_KEY[r])}</span>
           </div>
         ))}
       </div>

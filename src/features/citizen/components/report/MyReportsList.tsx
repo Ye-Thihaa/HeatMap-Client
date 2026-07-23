@@ -1,11 +1,14 @@
-import { ISSUE_CATEGORY_LABEL, STATUS_META, type MyReport } from '../../lib/report-types'
+import { ISSUE_CATEGORY_LABEL_KEY, STATUS_META, type MyReport } from '../../lib/report-types'
+import { useLanguage } from '@/lib/i18n/language-context'
 
 export function MyReportsList({ reports }: { reports: MyReport[] }) {
+  const { t } = useLanguage()
+
   if (reports.length === 0) return null
 
   return (
     <div className="space-y-2">
-      <h2 className="font-display text-sm font-semibold text-ink-900">My Reports</h2>
+      <h2 className="font-display text-sm font-semibold text-ink-900">{t('report.myReports')}</h2>
       <div className="space-y-2">
         {reports.map((r) => (
           <div
@@ -14,13 +17,13 @@ export function MyReportsList({ reports }: { reports: MyReport[] }) {
           >
             <div className="min-w-0">
               <p className="font-mono text-[11px] text-ink-500">{r.id}</p>
-              <p className="truncate text-sm font-medium text-ink-900">{ISSUE_CATEGORY_LABEL[r.category]}</p>
+              <p className="truncate text-sm font-medium text-ink-900">{t(ISSUE_CATEGORY_LABEL_KEY[r.category])}</p>
               <p className="truncate text-xs text-ink-500">{r.addressText}</p>
             </div>
             <span
               className={`flex-shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_META[r.status].className}`}
             >
-              {STATUS_META[r.status].label}
+              {t(STATUS_META[r.status].labelKey)}
             </span>
           </div>
         ))}

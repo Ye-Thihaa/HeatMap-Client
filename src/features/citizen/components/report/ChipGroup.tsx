@@ -47,7 +47,7 @@ export function ChipGroup<T extends string>(props: SingleSelectProps<T> | MultiS
             aria-pressed={active}
             className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors ${
               active
-                ? 'border-risk-high bg-risk-high/10 text-risk-high'
+                ? 'border-emerald-500 bg-emerald-500/10 text-emerald-500'
                 : 'border-mist-200 text-ink-700 hover:bg-mist-50'
             }`}
           >

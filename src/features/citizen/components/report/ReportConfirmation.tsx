@@ -1,6 +1,9 @@
 import { motion } from 'framer-motion'
+import { useLanguage } from '@/lib/i18n/language-context'
 
 export function ReportConfirmation({ reportId, onReset }: { reportId: string; onReset: () => void }) {
+  const { t } = useLanguage()
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -32,14 +35,14 @@ export function ReportConfirmation({ reportId, onReset }: { reportId: string; on
         />
       </motion.svg>
       <div>
-        <p className="font-display font-semibold">Thanks — that's on the record.</p>
-        <p className="text-sm text-ink-600">Planners can see this in their priority queue.</p>
+        <p className="font-display font-semibold">{t('report.thanks')}</p>
+        <p className="text-sm text-ink-600">{t('report.plannersNote')}</p>
         <p className="mt-3 inline-block rounded-full bg-mist-100 px-3 py-1 font-mono text-xs font-medium text-ink-800">
           {reportId}
         </p>
       </div>
       <button onClick={onReset} className="text-sm font-medium text-ink-700 underline">
-        Submit another
+        {t('report.submitAnother')}
       </button>
     </motion.div>
   )

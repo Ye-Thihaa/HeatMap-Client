@@ -1,6 +1,6 @@
 import Map, { Marker } from 'react-map-gl/maplibre'
-
-const MAP_STYLE = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
+import { useGreenerMapStyle } from '../../lib/map-style'
+import { useLanguage } from '@/lib/i18n/language-context'
 
 interface Props {
   lat: number
@@ -9,10 +9,13 @@ interface Props {
 }
 
 export function LocationPinMap({ lat, lng, onChange }: Props) {
+  const mapStyle = useGreenerMapStyle()
+  const { t } = useLanguage()
+
   return (
     <div className="relative h-40 w-full overflow-hidden rounded-xl">
       <Map
-        mapStyle={MAP_STYLE}
+        mapStyle={mapStyle}
         initialViewState={{ latitude: lat, longitude: lng, zoom: 15 }}
         style={{ width: '100%', height: '100%' }}
         attributionControl={false}
@@ -37,7 +40,7 @@ export function LocationPinMap({ lat, lng, onChange }: Props) {
         </Marker>
       </Map>
       <p className="pointer-events-none absolute bottom-1.5 left-1.5 rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-medium text-white">
-        Drag the pin to adjust
+        {t('location.dragHint')}
       </p>
     </div>
   )

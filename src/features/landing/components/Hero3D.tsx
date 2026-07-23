@@ -221,7 +221,7 @@ export function Hero3D() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="mb-4 rounded-full border border-white/20 bg-emerald-800/40 px-3 py-1 text-xs font-medium uppercase tracking-widest text-white backdrop-blur"
+            className="mb-4 rounded-full border-border border border-white/20 bg-emerald-800/40 px-3 py-1 text-xs font-medium uppercase tracking-widest text-white backdrop-blur"
           >
             AI Urban Heat Intelligence
           </motion.p>
@@ -266,7 +266,7 @@ export function Hero3D() {
             transition={{ delay: 1 }}
             className="mt-12 text-xs uppercase tracking-widest text-white/70"
           >
-            ↓ scroll to feel the heat
+            ↓ Scroll to See More
           </motion.p>
         </div>
       </div>

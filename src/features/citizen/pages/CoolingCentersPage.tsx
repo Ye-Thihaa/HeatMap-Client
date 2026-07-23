@@ -6,14 +6,16 @@ import { SOSButton } from '../components/SOSButton'
 import { api } from '@/lib/api-client'
 import { useHeatZones, useNearbyCoolingCenters } from '@/lib/queries'
 import type { CoolingCenterType, RouteSafetyResult } from '@/lib/types'
+import { useLanguage } from '@/lib/i18n/language-context'
 
-const TYPE_FILTERS: { value: CoolingCenterType | 'all'; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'cooling_center', label: '❄️ Cooling centers' },
-  { value: 'water_station', label: '💧 Water stations' },
+const TYPE_FILTERS: { value: CoolingCenterType | 'all'; labelKey: string }[] = [
+  { value: 'all', labelKey: 'cooling.filter.all' },
+  { value: 'cooling_center', labelKey: 'cooling.filter.coolingCenters' },
+  { value: 'water_station', labelKey: 'cooling.filter.waterStations' }
 ]
 
 export function CoolingCentersPage() {
+  const { t } = useLanguage()
   const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [pinCoords, setPinCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [activeSource, setActiveSource] = useState<'gps' | 'pin' | null>(null)
@@ -38,7 +40,7 @@ export function CoolingCentersPage() {
 
   function useMyLocation() {
     if (!navigator.geolocation) {
-      setGeoError('Geolocation is not supported in this browser.')
+      setGeoError(t('cooling.geoUnsupported'))
       return
     }
     setLocating(true)
@@ -51,7 +53,7 @@ export function CoolingCentersPage() {
         setLocating(false)
       },
       () => {
-        setGeoError('Location access was denied. Drop a pin on the map instead.')
+        setGeoError(t('cooling.geoDenied'))
         setLocating(false)
       }
     )
@@ -94,10 +96,10 @@ export function CoolingCentersPage() {
   }, [searchCoords?.lat, searchCoords?.lng, routeTarget?.id])
 
   const safetyLabel = {
-    safe: { text: '✅ Safe route', className: 'bg-safe/15 text-safe-dark' },
-    caution: { text: '⚠️ Passes through a moderate-risk zone', className: 'bg-amber-100 text-amber-800' },
-    risky: { text: '🔥 Passes through high-risk zone(s)', className: 'bg-red-100 text-red-700' },
-    unknown: { text: 'Route safety unknown', className: 'bg-mist-100 text-ink-600' },
+    safe: { key: 'cooling.safety.safe', className: 'bg-safe/15 text-safe-dark' },
+    caution: { key: 'cooling.safety.caution', className: 'bg-amber-100 text-amber-800' },
+    risky: { key: 'cooling.safety.risky', className: 'bg-red-100 text-red-700' },
+    unknown: { key: 'cooling.safety.unknown', className: 'bg-mist-100 text-ink-600' },
   } as const
 
   return (
@@ -116,9 +118,9 @@ export function CoolingCentersPage() {
         <div className="pointer-events-none flex flex-wrap items-start justify-between gap-3">
           <div className="pointer-events-auto max-w-sm rounded-2xl bg-white/90 px-4 py-3 shadow-sm backdrop-blur">
             <h1 className="font-display text-2xl font-semibold tracking-tight">
-              Find a cooling center
+              {t('cooling.title')}
             </h1>
-            <p className="text-sm text-ink-600">Nearest air-conditioned spaces open right now.</p>
+            <p className="text-sm text-ink-600">{t('cooling.subtitle')}</p>
 
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <button
@@ -126,23 +128,23 @@ export function CoolingCentersPage() {
                 disabled={locating}
                 className="rounded-full bg-ink-900 px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
               >
-                {locating ? 'Locating…' : 'Use my location'}
+                {locating ? t('cooling.locating') : t('cooling.useMyLocation')}
               </button>
               <HydrationReminder />
             </div>
             {geoError && <p className="mt-2 text-sm text-red-600">{geoError}</p>}
             {!searchCoords && !geoError && (
-              <p className="mt-2 text-sm text-ink-600">Or click a point on the map to drop a pin.</p>
+              <p className="mt-2 text-sm text-ink-600">{t('cooling.orClickHint')}</p>
             )}
             {activeSource === 'pin' && (
               <p className="mt-2 text-sm text-ink-600">
-                Showing results near your dropped pin.{' '}
+                {t('cooling.pinResultsHint')}{' '}
                 {gpsCoords && (
                   <button
                     onClick={() => setActiveSource('gps')}
                     className="font-medium text-ink-900 underline underline-offset-2"
                   >
-                    Use my location instead
+                    {t('cooling.useMyLocationInstead')}
                   </button>
                 )}
               </p>
@@ -159,7 +161,7 @@ export function CoolingCentersPage() {
                       : 'bg-mist-100 text-ink-700 hover:bg-mist-200'
                   }`}
                 >
-                  {f.label}
+                  {t(f.labelKey)}
                 </button>
               ))}
             </div>
@@ -168,12 +170,12 @@ export function CoolingCentersPage() {
           <div className="pointer-events-auto max-h-[calc(100vh-8rem)] w-full max-w-xs space-y-3 overflow-y-auto">
             {isLoading && searchCoords && (
               <div className="rounded-2xl bg-white/90 p-4 text-sm text-ink-600 shadow-sm backdrop-blur">
-                Searching nearby…
+                {t('cooling.searching')}
               </div>
             )}
             {!searchCoords && (
               <div className="rounded-2xl border border-dashed border-mist-200 bg-white/90 p-5 text-sm text-ink-600 shadow-sm backdrop-blur">
-                Share your location to see ranked results here.
+                {t('cooling.shareLocationHint')}
               </div>
             )}
             {filteredCenters.map((center) => (
@@ -188,11 +190,13 @@ export function CoolingCentersPage() {
                   <div>
                     <h3 className="font-display font-semibold">{center.name}</h3>
                     <span className="text-xs text-ink-600">
-                      {center.type === 'water_station' ? '💧 Water station' : '❄️ Cooling center'}
+                      {center.type === 'water_station'
+                        ? `💧 ${t('cooling.type.waterStation')}`
+                        : `❄️ ${t('cooling.type.coolingCenter')}`}
                     </span>
                     {center.sponsor_name && (
                       <span className="ml-1.5 rounded-full bg-mist-100 px-2 py-0.5 text-[10px] font-medium text-ink-600">
-                        Sponsored by {center.sponsor_name}
+                        {t('cooling.sponsoredBy', { name: center.sponsor_name })}
                       </span>
                     )}
                   </div>
@@ -202,18 +206,18 @@ export function CoolingCentersPage() {
                 </div>
                 <dl className="mt-2 space-y-1 text-sm text-ink-700">
                   <div className="flex justify-between">
-                    <dt>Hours</dt>
+                    <dt>{t('cooling.hours')}</dt>
                     <dd>{center.hours}</dd>
                   </div>
                   {center.capacity != null && (
                     <div className="flex justify-between">
-                      <dt>Capacity</dt>
+                      <dt>{t('cooling.capacity')}</dt>
                       <dd>{center.capacity}</dd>
                     </div>
                   )}
                   {center.contact && (
                     <div className="flex justify-between">
-                      <dt>Contact</dt>
+                      <dt>{t('cooling.contact')}</dt>
                       <dd>{center.contact}</dd>
                     </div>
                   )}
@@ -222,14 +226,14 @@ export function CoolingCentersPage() {
                 {routeTargetId === center.id && (
                   <div className="mt-2 border-t border-mist-100 pt-2">
                     {routeSafetyLoading && (
-                      <p className="text-xs text-ink-600">Checking route safety…</p>
+                      <p className="text-xs text-ink-600">{t('cooling.checkingRoute')}</p>
                     )}
                     {!routeSafetyLoading && routeSafety && (
                       <span
                         className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${safetyLabel[routeSafety.overall_safety].className}`}
-                        title="Estimated from zone risk data along a direct path, not precise shade routing"
+                        title={t('cooling.safety.tooltip')}
                       >
-                        {safetyLabel[routeSafety.overall_safety].text}
+                        {t(safetyLabel[routeSafety.overall_safety].key)}
                       </span>
                     )}
                   </div>

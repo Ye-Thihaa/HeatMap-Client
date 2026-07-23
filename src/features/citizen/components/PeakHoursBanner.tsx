@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { useLanguage } from '@/lib/i18n/language-context'
 
 function isPeakHeatHour(): boolean {
   const now = new Date()
@@ -10,6 +11,7 @@ function isPeakHeatHour(): boolean {
 }
 
 export function PeakHoursBanner() {
+  const { t } = useLanguage()
   const [active, setActive] = useState(isPeakHeatHour)
   const [dismissed, setDismissed] = useState(false)
 
@@ -32,12 +34,11 @@ export function PeakHoursBanner() {
         >
           <span className="text-lg leading-none">☀️</span>
           <p className="text-ink-800">
-            <span className="font-semibold">Peak heat hours</span> — avoid going outside
-            if possible (12:30–3:30 PM).
+            <span className="font-semibold">{t('peak.title')}</span> {t('peak.body')}
           </p>
           <button
             onClick={() => setDismissed(true)}
-            aria-label="Dismiss"
+            aria-label={t('peak.dismissAria')}
             className="ml-1 rounded-full p-1 text-ink-600 hover:bg-black/5"
           >
             ✕

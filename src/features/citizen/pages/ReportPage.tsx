@@ -8,6 +8,7 @@ import { SeveritySelector } from '../components/report/SeveritySelector'
 import { MyReportsList } from '../components/report/MyReportsList'
 import { ReportConfirmation } from '../components/report/ReportConfirmation'
 import { loadMyReports, nextReportId, saveMyReports } from '../lib/report-storage'
+import { useLanguage } from '@/lib/i18n/language-context'
 import {
   AFFECTED_GROUPS,
   ISSUE_CATEGORIES,
@@ -19,21 +20,23 @@ import {
 } from '../lib/report-types'
 
 const ANALYSIS_POOL: AiPhotoAnalysis[] = [
-  { surfaceType: 'Asphalt', shadeCoveragePct: 8, visibleDamage: true, suggestedUrgency: 'high' },
-  { surfaceType: 'Concrete pavement', shadeCoveragePct: 35, visibleDamage: false, suggestedUrgency: 'low' },
-  { surfaceType: 'Mixed (asphalt + bare soil)', shadeCoveragePct: 14, visibleDamage: true, suggestedUrgency: 'high' },
-  { surfaceType: 'Concrete', shadeCoveragePct: 22, visibleDamage: false, suggestedUrgency: 'medium' }
+  { surfaceTypeKey: 'photo.surfaceType.asphalt', shadeCoveragePct: 8, visibleDamage: true, suggestedUrgency: 'high' },
+  { surfaceTypeKey: 'photo.surfaceType.concretePavement', shadeCoveragePct: 35, visibleDamage: false, suggestedUrgency: 'low' },
+  { surfaceTypeKey: 'photo.surfaceType.mixedAsphaltSoil', shadeCoveragePct: 14, visibleDamage: true, suggestedUrgency: 'high' },
+  { surfaceTypeKey: 'photo.surfaceType.concrete', shadeCoveragePct: 22, visibleDamage: false, suggestedUrgency: 'medium' }
 ]
 
 function Section({
   icon: Icon,
   title,
   optional,
+  optionalLabel,
   children
 }: {
   icon: ComponentType<{ className?: string }>
   title: string
   optional?: boolean
+  optionalLabel?: string
   children: ReactNode
 }) {
   return (
@@ -41,7 +44,7 @@ function Section({
       <div className="flex items-center gap-1.5">
         <Icon className="h-4 w-4 text-ink-500" />
         <h2 className="text-sm font-semibold text-ink-900">{title}</h2>
-        {optional && <span className="text-xs font-normal text-ink-500">(optional)</span>}
+        {optional && <span className="text-xs font-normal text-ink-500">{optionalLabel}</span>}
       </div>
       {children}
     </div>
@@ -49,6 +52,7 @@ function Section({
 }
 
 export function ReportGapPage() {
+  const { lang, t } = useLanguage()
   const [photos, setPhotos] = useState<(PhotoItem & { file: File })[]>([])
   const [analyzing, setAnalyzing] = useState(false)
   const [analysis, setAnalysis] = useState<AiPhotoAnalysis | null>(null)
@@ -80,8 +84,8 @@ export function ReportGapPage() {
   }, [])
 
   useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 30_000)
-    return () => clearInterval(t)
+    const timer = setInterval(() => setNow(new Date()), 30_000)
+    return () => clearInterval(timer)
   }, [])
 
   // Simulated AI photo analysis — runs whenever the photo count changes.
@@ -92,11 +96,11 @@ export function ReportGapPage() {
       return
     }
     setAnalyzing(true)
-    const t = setTimeout(() => {
+    const timeout = setTimeout(() => {
       setAnalysis(ANALYSIS_POOL[photos.length % ANALYSIS_POOL.length])
       setAnalyzing(false)
     }, 1300)
-    return () => clearTimeout(t)
+    return () => clearTimeout(timeout)
   }, [photos.length])
 
   // Revoke object URLs on unmount so we don't leak blob references.
@@ -125,7 +129,7 @@ export function ReportGapPage() {
 
   function useMyLocation() {
     if (!navigator.geolocation) {
-      setGeoError('Geolocation is not supported in this browser.')
+      setGeoError(t('report.geoUnsupported'))
       return
     }
     setLocating(true)
@@ -140,7 +144,7 @@ export function ReportGapPage() {
         setLocating(false)
       },
       () => {
-        setGeoError('Location access was denied. You can still type an address manually.')
+        setGeoError(t('report.geoDenied'))
         setLocating(false)
       }
     )
@@ -187,11 +191,21 @@ export function ReportGapPage() {
     setSubmittedId(report.id)
   }
 
+  const categoryOptions = ISSUE_CATEGORIES.map((c) => ({ value: c.value, label: t(c.labelKey) }))
+  const affectedOptions = AFFECTED_GROUPS.map((a) => ({ value: a.value, label: t(a.labelKey) }))
+  const optionalLabel = t('common.optional')
+  const dateTimeLabel = now.toLocaleString(lang === 'mm' ? 'my-MM' : undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+  })
+
   return (
     <div className="mx-auto max-w-lg space-y-5 px-5 py-6">
       <div>
-        <h1 className="font-display text-2xl font-semibold tracking-tight">Report</h1>
-        <p className="text-sm text-ink-600">Help planners see what's missing on the ground.</p>
+        <h1 className="font-display text-2xl font-semibold tracking-tight">{t('report.title')}</h1>
+        <p className="text-sm text-ink-600">{t('report.subtitle')}</p>
       </div>
 
       <AnimatePresence mode="wait">
@@ -216,14 +230,18 @@ export function ReportGapPage() {
               analysis={analysis}
             />
 
-            <Section icon={MapPin} title="Location">
+            <Section icon={MapPin} title={t('report.section.location')}>
               <button
                 type="button"
                 onClick={useMyLocation}
                 disabled={locating}
                 className="w-full rounded-lg bg-ink-900 px-3 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
               >
-                {locating ? 'Locating…' : location ? 'Re-detect my location' : 'Use current location'}
+                {locating
+                  ? t('report.locating')
+                  : location
+                    ? t('report.redetectLocation')
+                    : t('report.useCurrentLocation')}
               </button>
               {geoError && <p className="text-xs text-red-600">{geoError}</p>}
 
@@ -231,7 +249,7 @@ export function ReportGapPage() {
                 type="text"
                 value={addressText}
                 onChange={(e) => setAddressText(e.target.value)}
-                placeholder="Address (auto-filled once located, editable)"
+                placeholder={t('report.addressPlaceholder')}
                 className="w-full rounded-lg border border-mist-200 px-3 py-2 text-sm"
               />
 
@@ -248,29 +266,29 @@ export function ReportGapPage() {
                 type="text"
                 value={landmarkNote}
                 onChange={(e) => setLandmarkNote(e.target.value)}
-                placeholder='Landmark note, e.g. "near Jollibee Katipunan" (optional)'
+                placeholder={t('report.landmarkPlaceholder')}
                 className="w-full rounded-lg border border-mist-200 px-3 py-2 text-sm"
               />
             </Section>
 
-            <Section icon={Tag} title="Issue category">
-              <ChipGroup options={ISSUE_CATEGORIES} value={category} onChange={setCategory} />
+            <Section icon={Tag} title={t('report.section.category')}>
+              <ChipGroup options={categoryOptions} value={category} onChange={setCategory} />
             </Section>
 
-            <Section icon={Bell} title="Severity">
+            <Section icon={Bell} title={t('report.section.severity')}>
               <SeveritySelector value={severity} onChange={setSeverity} aiSuggested={analysis?.suggestedUrgency ?? null} />
             </Section>
 
-            <Section icon={Users} title="Who's affected" optional>
-              <ChipGroup multiple options={AFFECTED_GROUPS} value={affected} onChange={setAffected} />
+            <Section icon={Users} title={t('report.section.affected')} optional optionalLabel={optionalLabel}>
+              <ChipGroup multiple options={affectedOptions} value={affected} onChange={setAffected} />
             </Section>
 
-            <Section icon={FileText} title="Description" optional>
+            <Section icon={FileText} title={t('report.section.description')} optional optionalLabel={optionalLabel}>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
-                placeholder="Anything else officials should know?"
+                placeholder={t('report.descriptionPlaceholder')}
                 className="w-full rounded-lg border border-mist-200 px-3 py-2 text-sm"
               />
             </Section>
@@ -278,14 +296,12 @@ export function ReportGapPage() {
             <div className="flex items-center justify-between rounded-2xl border border-mist-200 bg-white px-5 py-3 shadow-sm">
               <span className="flex items-center gap-1.5 text-sm text-ink-600">
                 <Clock className="h-4 w-4 text-ink-500" />
-                Date &amp; time
+                {t('report.dateTime')}
               </span>
-              <span className="text-sm font-medium text-ink-800">
-                {now.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
-              </span>
+              <span className="text-sm font-medium text-ink-800">{dateTimeLabel}</span>
             </div>
 
-            <Section icon={Bell} title="Contact" optional>
+            <Section icon={Bell} title={t('report.section.contact')} optional optionalLabel={optionalLabel}>
               <div className="inline-flex rounded-full bg-mist-100 p-1">
                 <button
                   type="button"
@@ -294,7 +310,7 @@ export function ReportGapPage() {
                     contactMode === 'anonymous' ? 'bg-white text-ink-900 shadow-sm' : 'text-ink-600'
                   }`}
                 >
-                  Report anonymously
+                  {t('report.anonymous')}
                 </button>
                 <button
                   type="button"
@@ -303,7 +319,7 @@ export function ReportGapPage() {
                     contactMode === 'notify' ? 'bg-white text-ink-900 shadow-sm' : 'text-ink-600'
                   }`}
                 >
-                  Notify me of updates
+                  {t('report.notify')}
                 </button>
               </div>
 
@@ -319,14 +335,14 @@ export function ReportGapPage() {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Email address"
+                      placeholder={t('report.emailPlaceholder')}
                       className="w-full rounded-lg border border-mist-200 px-3 py-2 text-sm"
                     />
                     <input
                       type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      placeholder="Phone number (optional)"
+                      placeholder={t('report.phonePlaceholder')}
                       className="w-full rounded-lg border border-mist-200 px-3 py-2 text-sm"
                     />
                   </motion.div>
@@ -337,14 +353,12 @@ export function ReportGapPage() {
             <button
               type="submit"
               disabled={!canSubmit}
-              className="w-full rounded-lg bg-risk-high py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+              className="w-full rounded-lg bg-emerald-500 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
             >
-              {submitting ? 'Submitting…' : 'Submit report'}
+              {submitting ? t('report.submitting') : t('report.submit')}
             </button>
             {!canSubmit && !submitting && (photos.length === 0 || !location || !category) && (
-              <p className="text-center text-xs text-ink-500">
-                Add a photo, confirm a location, and pick an issue category to submit.
-              </p>
+              <p className="text-center text-xs text-ink-500">{t('report.submitHint')}</p>
             )}
           </motion.form>
         )}
