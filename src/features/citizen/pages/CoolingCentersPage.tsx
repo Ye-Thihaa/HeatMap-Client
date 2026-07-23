@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { HeatMap } from '../components/HeatMap'
 import { PeakHoursBanner } from '../components/PeakHoursBanner'
 import { HydrationReminder } from '../components/HydrationReminder'
-import { SOSButton } from '../components/SOSButton'
 import { api } from '@/lib/api-client'
 import { useHeatZones, useNearbyCoolingCenters } from '@/lib/queries'
 import type { CoolingCenterType, RouteSafetyResult } from '@/lib/types'
@@ -248,7 +247,6 @@ export function CoolingCentersPage() {
         </div>
       </div>
 
-      <SOSButton />
     </div>
   )
 }

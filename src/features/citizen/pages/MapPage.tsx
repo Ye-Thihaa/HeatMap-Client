@@ -55,7 +55,7 @@ export function CitizenMapPage() {
       {/* Bottom overlay: zone detail panel, or a helper hint when nothing
           is selected. Centered with a max width so it doesn't stretch
           full-width on large screens. */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 p-5">
+      <div className="pointer-events-none absolute inset-x-0 bottom-24 z-10 p-5">
         <div className="pointer-events-auto mx-auto max-w-xl">
           {selectedZoneId ? (
             <ZoneDetailPanel zoneId={selectedZoneId} onClose={() => setSelectedZoneId(null)} />

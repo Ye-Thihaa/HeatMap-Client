@@ -1,12 +1,12 @@
 import { Link, useLocation } from '@tanstack/react-router'
-import { Home, Map, Brain, FileText } from 'lucide-react'
+import { Home, MapPin, Sparkles, FileText } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useLanguage } from '@/lib/i18n/language-context'
 
 const items = [
-  { to: '/app/home', labelKey: 'nav.home', icon: Home },
-  { to: '/app', labelKey: 'nav.map', icon: Map },
-  { to: '/app/ai', labelKey: 'nav.ai', icon: Brain },
+  { to: '/app', labelKey: 'nav.home', icon: Home },
+  { to: '/app/map', labelKey: 'nav.map', icon: MapPin },
+  { to: '/app/ai', labelKey: 'nav.ai', icon: Sparkles },
   { to: '/app/report', labelKey: 'nav.report', icon: FileText }
 ]
 
