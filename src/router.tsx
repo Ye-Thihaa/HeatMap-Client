@@ -1,5 +1,6 @@
 import { Outlet, createRootRoute, createRoute, createRouter } from '@tanstack/react-router'
 import { RootLayout } from './components/layout/RootLayout'
+import { NotificationsProvider } from '@/lib/notifications-context'
 import { LandingPage } from './features/landing/pages/LandingPage'
 import { CitizenLayout } from './features/citizen/layout/CitizenLayout'
 import { CitizenHomePage } from './features/citizen/pages/HomePage'
@@ -16,9 +17,16 @@ import { InterventionsPage } from './features/dashboard/pages/InterventionsPage'
 
 const rootRoute = createRootRoute({
   component: () => (
-    <RootLayout>
-      <Outlet />
-    </RootLayout>
+    // NotificationsProvider sits above the whole route tree so both the
+    // citizen app (which reads/writes notifications) and the gov dashboard
+    // (which currently doesn't, but could later) share one instance — and
+    // so it survives client-side navigation between routes instead of
+    // remounting (and losing in-memory state) every time you switch pages.
+    <NotificationsProvider>
+      <RootLayout>
+        <Outlet />
+      </RootLayout>
+    </NotificationsProvider>
   )
 })
 
