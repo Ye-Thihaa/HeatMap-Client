@@ -32,6 +32,7 @@ interface Props {
   hospitals?: Hospital[];
   selectedZoneId?: string | null;
   onSelectZone?: (id: string) => void;
+  onSelectHospital?: (hospital: Hospital) => void;
   userLocation?: { lat: number; lng: number } | null;
   pinLocation?: { lat: number; lng: number } | null;
   onMapClick?: (lat: number, lng: number) => void;
@@ -50,6 +51,7 @@ export function HeatMap({
   hospitals = [],
   selectedZoneId,
   onSelectZone,
+  onSelectHospital,
   userLocation,
   pinLocation,
   onMapClick,
@@ -245,10 +247,24 @@ export function HeatMap({
         ))}
 
         {validHospitals.map((h) => (
-          <Marker key={h.id} latitude={h.lat} longitude={h.lng} anchor="bottom">
-            <div className="flex flex-col items-center" title={h.name}>
+          <Marker
+            key={h.id}
+            latitude={h.lat}
+            longitude={h.lng}
+            anchor="bottom"
+            onClick={(e) => {
+              e.originalEvent.stopPropagation();
+              onSelectHospital?.(h);
+            }}
+          >
+            <button
+              type="button"
+              className="flex flex-col items-center"
+              title={h.name}
+              aria-label={h.name}
+            >
               <div
-                className={`relative grid h-8 w-8 place-items-center rounded-full bg-rose-600 text-white shadow-lg ${
+                className={`relative grid h-8 w-8 place-items-center rounded-full bg-rose-600 text-white shadow-lg transition-transform hover:scale-110 ${
                   h.emergency ? "animate-pulse" : ""
                 }`}
               >
@@ -261,7 +277,7 @@ export function HeatMap({
                   {t("map.emergency") ?? "24/7"}
                 </span>
               )}
-            </div>
+            </button>
           </Marker>
         ))}
 
