@@ -71,15 +71,18 @@ export function generateDailySummary({
   atRiskCount,
   now,
   lang
-}: SummaryInput): string | null {
+}: SummaryInput): string[] | null {
   if (zones.length === 0 || avgTemp === null) return null
 
   const advice = timingAdvice(risk, now, lang)
 
   if (risk === 'low') {
-    return lang === 'mm'
-      ? `ယနေ့သည် အပူရှိန် ${RISK_COPY_MM.low} နေ့ဖြစ်ပါသည် — ယခုအချိန် အန္တရာယ်များသောနေရာ မရှိပါ။ ${advice}`
-      : `Today's ${RISK_COPY.low} day for heat — no zones are flagged high risk right now. ${advice}`
+    return [
+      lang === 'mm'
+        ? `ယနေ့သည် အပူရှိန် ${RISK_COPY_MM.low} နေ့ဖြစ်ပါသည် — ယခုအချိန် အန္တရာယ်များသောနေရာ မရှိပါ။`
+        : `Today's ${RISK_COPY.low} day for heat — no zones are flagged high risk right now.`,
+      advice
+    ]
   }
 
   const window = PEAK_WINDOW[risk]
@@ -88,11 +91,19 @@ export function generateDailySummary({
     const hottestPartMm = hottest
       ? `၊ ${hottest.name} တွင် အပူဆုံးဖြစ်ပြီး ${Math.round(hottest.current_temp_c)}°C ရှိပါသည်`
       : ''
-    return `ယနေ့သည် ${RISK_COPY_MM[risk]} နေ့ဖြစ်ပါသည် — နေရာ ${zones.length} ခုအနက် ${atRiskCount} ခုသည် အန္တရာယ်များ/အလွန်အန္တရာယ်ကြီးဟု အမှတ်အသားပြုထားပါသည်${hottestPartMm}။ အပူဆုံးကာလမှာ ${window.labelMm} ခန့်ဖြစ်နိုင်ပါသည်။ ${advice}`
+    return [
+      `ယနေ့သည် ${RISK_COPY_MM[risk]} နေ့ဖြစ်ပါသည် — နေရာ ${zones.length} ခုအနက် ${atRiskCount} ခုသည် အန္တရာယ်များ/အလွန်အန္တရာယ်ကြီးဟု အမှတ်အသားပြုထားပါသည်${hottestPartMm}။`,
+      `အပူဆုံးကာလမှာ ${window.labelMm} ခန့်ဖြစ်နိုင်ပါသည်။`,
+      advice
+    ]
   }
 
   const hottestPart = hottest
     ? `, with ${hottest.name} running hottest at ${Math.round(hottest.current_temp_c)}°C`
     : ''
-  return `Today's ${RISK_COPY[risk]} day — ${atRiskCount} of ${zones.length} zones are flagged high or severe${hottestPart}. The worst window looks like ${window.label}. ${advice}`
+  return [
+    `Today's ${RISK_COPY[risk]} day — ${atRiskCount} of ${zones.length} zones are flagged high or severe${hottestPart}.`,
+    `The worst window looks like ${window.label}.`,
+    advice
+  ]
 }

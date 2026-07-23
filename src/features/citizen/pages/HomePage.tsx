@@ -1,22 +1,12 @@
 import { Link } from '@tanstack/react-router'
 import { useEffect, useMemo, useState } from 'react'
-import { Map, Brain, FileText, Building2, Sun, Flame, ShieldAlert, ChevronRight, Sparkles } from 'lucide-react'
+import { Sun, Flame, ChevronRight, Sparkles } from 'lucide-react'
 import { useHeatZones } from '@/lib/queries'
 import type { HeatZoneSummary, RiskLevel } from '@/lib/types'
 import { useLanguage } from '@/lib/i18n/language-context'
 import { generateDailySummary } from '../lib/daily-summary'
 
-const quickLinks = [
-  { to: '/app', labelKey: 'home.link.heatMap.label', descKey: 'home.link.heatMap.desc', icon: Map },
-  {
-    to: '/app/cooling-centers',
-    labelKey: 'home.link.coolingCenters.label',
-    descKey: 'home.link.coolingCenters.desc',
-    icon: Building2
-  },
-  { to: '/app/ai', labelKey: 'home.link.aiAnalysis.label', descKey: 'home.link.aiAnalysis.desc', icon: Brain },
-  { to: '/app/report', labelKey: 'home.link.report.label', descKey: 'home.link.report.desc', icon: FileText }
-]
+const DEFAULT_LOCATION = 'Yangon, Myanmar'
 
 const riskOrder: RiskLevel[] = ['low', 'moderate', 'high', 'severe']
 
@@ -52,9 +42,38 @@ export function CitizenHomePage() {
   const { lang, t } = useLanguage()
 
   const [now, setNow] = useState(() => new Date())
+  const [locationName, setLocationName] = useState(DEFAULT_LOCATION)
+
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 30_000)
     return () => clearInterval(timer)
+  }, [])
+
+  useEffect(() => {
+    if (!navigator.geolocation) return
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=en`,
+            { headers: { 'User-Agent': 'HeatMap-Client/1.0' } }
+          )
+          const data = await res.json()
+          if (data?.address) {
+            const city = data.address.city || data.address.town || data.address.village || data.address.county
+            const country = data.address.country
+            const parts = [city, country].filter(Boolean)
+            if (parts.length > 0) setLocationName(parts.join(', '))
+          }
+        } catch {
+          /* use default */
+        }
+      },
+      () => {
+        /* use default */
+      }
+    )
   }, [])
 
   const { avgTemp, risk, hottest, atRiskCount } = useMemo(() => {
@@ -91,11 +110,11 @@ export function CitizenHomePage() {
 
         <div className="relative z-10 flex items-start justify-between">
           <div>
-            <p className="text-sm text-white/80">{t('home.cityNow')}</p>
+            <p className="text-sm text-white/80">{locationName}</p>
             <p className="mt-3 font-display text-6xl font-semibold tracking-tight">
-              {avgTemp !== null ? `${avgTemp}°` : '--'}
+              {avgTemp !== null ? `${avgTemp}°C` : '--'}
             </p>
-            <p className="mt-1 text-lg font-medium">{t('home.heatRisk', { level: t(meta.labelKey) })}</p>
+            <p className="mt-1 text-sm font-medium">{t('home.heatRisk', { level: t(meta.labelKey) })}</p>
           </div>
           <div className="grid h-14 w-14 flex-shrink-0 place-items-center rounded-2xl bg-white/15 backdrop-blur">
             <Sun className="h-7 w-7" />
@@ -125,7 +144,14 @@ export function CitizenHomePage() {
           </span>
         </div>
         {dailySummary ? (
-          <p className="mt-2 text-sm leading-relaxed text-ink-700">{dailySummary}</p>
+          <ul className="mt-2 space-y-1.5">
+            {dailySummary.map((item, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm leading-relaxed text-ink-700">
+                <span className="mt-[7px] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-ink-300" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
         ) : (
           <div className="mt-2.5 space-y-1.5">
             <div className="h-3 w-full animate-pulse rounded bg-mist-100" />
@@ -135,27 +161,17 @@ export function CitizenHomePage() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-2xl border border-mist-200 bg-white p-4 shadow-sm">
-          <div className="flex items-center gap-2 text-ink-600">
-            <Flame className="h-4 w-4" />
-            <p className="text-xs font-medium">{t('home.riskIndex')}</p>
-          </div>
-          <p className={`mt-2 font-display text-2xl font-semibold ${meta.text}`}>{t(meta.labelKey)}</p>
-          <div className="relative mt-3 h-1.5 w-full rounded-full bg-gradient-to-r from-risk-low via-risk-moderate to-risk-severe">
-            <span
-              className="absolute -top-0.5 h-2.5 w-2.5 -translate-x-1/2 rounded-full border-2 border-white bg-ink-900 shadow"
-              style={{ left: `${meta.pct}%` }}
-            />
-          </div>
+      <div className="rounded-2xl border border-mist-200 bg-white p-4 shadow-sm">
+        <div className="flex items-center gap-2 text-ink-600">
+          <Flame className="h-4 w-4" />
+          <p className="text-xs font-medium">{t('home.riskIndex')}</p>
         </div>
-        <div className="rounded-2xl border border-mist-200 bg-white p-4 shadow-sm">
-          <div className="flex items-center gap-2 text-ink-600">
-            <ShieldAlert className="h-4 w-4" />
-            <p className="text-xs font-medium">{t('home.zonesAtRisk')}</p>
-          </div>
-          <p className="mt-2 font-display text-2xl font-semibold text-ink-900">{atRiskCount}</p>
-          <p className="mt-3 text-xs text-ink-600">{t('home.ofTrackedZones', { count: zones.length })}</p>
+        <p className={`mt-2 font-display text-2xl font-semibold ${meta.text}`}>{t(meta.labelKey)}</p>
+        <div className="relative mt-3 h-1.5 w-full rounded-full bg-gradient-to-r from-risk-low via-risk-moderate to-risk-severe">
+          <span
+            className="absolute -top-0.5 h-2.5 w-2.5 -translate-x-1/2 rounded-full border-2 border-white bg-ink-900 shadow"
+            style={{ left: `${meta.pct}%` }}
+          />
         </div>
       </div>
 
@@ -167,7 +183,7 @@ export function CitizenHomePage() {
             {t('home.viewMap')} <ChevronRight className="h-3 w-3" />
           </Link>
         </div>
-        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+        <div className="mt-3 flex gap-2 overflow-x-auto scrollbar-hide pb-1">
           {isLoading &&
             Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="h-24 w-16 flex-shrink-0 animate-pulse rounded-xl bg-mist-100" />
@@ -194,23 +210,6 @@ export function CitizenHomePage() {
             <p className="py-3 text-xs text-ink-600">{t('home.noZoneData')}</p>
           )}
         </div>
-      </div>
-
-      {/* Quick actions */}
-      <div className="grid grid-cols-2 gap-3">
-        {quickLinks.map(({ to, labelKey, descKey, icon: Icon }) => (
-          <Link
-            key={to}
-            to={to}
-            className="flex flex-col gap-2 rounded-2xl border border-mist-200 bg-white p-4 shadow-sm transition-colors hover:border-mist-300"
-          >
-            <Icon className="h-5 w-5 text-ink-900" />
-            <div>
-              <p className="font-display font-semibold text-sm">{t(labelKey)}</p>
-              <p className="text-xs text-ink-600">{t(descKey)}</p>
-            </div>
-          </Link>
-        ))}
       </div>
 
       <div className="rounded-2xl border border-dashed border-mist-200 bg-white/60 p-5 text-center text-sm text-ink-600">

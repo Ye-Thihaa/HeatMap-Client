@@ -6,7 +6,7 @@ import { TopBar } from '../components/TopBar'
 export function CitizenLayout() {
   return (
     <LanguageProvider>
-      <div className="min-h-screen bg-mist-50 pb-24">
+      <div className="flex min-h-screen flex-col bg-mist-50 pb-24">
         <TopBar />
         {/*
          * No max-width/padding here anymore — that constraint used to apply to
@@ -17,7 +17,7 @@ export function CitizenLayout() {
          * px-5 py-6` themselves. Pages that want full-bleed (CitizenMapPage)
          * simply don't, and render right up to the viewport edges.
          */}
-        <main>
+        <main className="flex flex-1 flex-col">
           <Outlet />
         </main>
         <BottomNav />
