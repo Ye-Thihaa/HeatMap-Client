@@ -30,8 +30,8 @@ export default {
         risk: {
           low: '#38BDF8',
           moderate: '#FBBF24',
-          high: '#FB7A34',
-          severe: '#EF4444'
+          high: '#EF4444',
+          severe: '#B91C1C'
         }
       },
       fontFamily: {

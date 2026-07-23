@@ -38,13 +38,13 @@ const appRoute = createRoute({
 const appIndexRoute = createRoute({
   getParentRoute: () => appRoute,
   path: '/',
-  component: CitizenMapPage
+  component: CitizenHomePage
 })
 
-const appHomeRoute = createRoute({
+const appMapRoute = createRoute({
   getParentRoute: () => appRoute,
-  path: '/home',
-  component: CitizenHomePage
+  path: '/map',
+  component: CitizenMapPage
 })
 
 const appCoolingCentersRoute = createRoute({
@@ -104,7 +104,7 @@ const dashboardInterventionsRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
-  appRoute.addChildren([appHomeRoute, appIndexRoute, appCoolingCentersRoute, appReportRoute, appAiRoute, appNotificationsRoute]),
+  appRoute.addChildren([appIndexRoute, appMapRoute, appCoolingCentersRoute, appReportRoute, appAiRoute, appNotificationsRoute]),
   dashboardRoute.addChildren([
     dashboardIndexRoute,
     dashboardCoolingGapsRoute,

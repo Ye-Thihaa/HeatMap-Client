@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Send, MapPin, Sparkles, User, Thermometer, Trees } from 'lucide-react'
 import { useLanguage } from '@/lib/i18n/language-context'
-
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
+import { api } from '@/lib/api-client'
 
 type ZoneContext = {
   name: string
@@ -19,19 +18,14 @@ async function sendAssistantMessage(
   history: Msg[],
   language: 'en' | 'mm',
 ) {
-  const res = await fetch(`${API_URL}/assistant/message`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      message,
-      lat: location?.lat ?? null,
-      lng: location?.lng ?? null,
-      history: history.slice(-6),
-      language,
-    }),
+  const result = await api.sendAssistantMessage({
+    message,
+    lat: location?.lat ?? null,
+    lng: location?.lng ?? null,
+    history: history.slice(-6),
+    language,
   })
-  if (!res.ok) throw new Error(`Assistant request failed: ${res.status}`)
-  return res.json() as Promise<{ reply: string; zone_context: ZoneContext }>
+  return result as { reply: string; zone_context: ZoneContext }
 }
 
 const riskStyles: Record<string, string> = {

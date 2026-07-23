@@ -19,8 +19,8 @@ import type {
 export const RISK_COLORS: Record<RiskLevel, string> = {
   low: '#34D399',
   moderate: '#FBBF24',
-  high: '#FB7A34',
-  severe: '#EF4444'
+  high: '#EF4444',
+  severe: '#B91C1C'
 }
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ? '' : '/api'

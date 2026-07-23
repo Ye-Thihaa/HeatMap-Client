@@ -4,22 +4,6 @@ import { useHeatZone } from '@/lib/queries'
 import type { RiskLevel } from '@/lib/types'
 import { useLanguage } from '@/lib/i18n/language-context'
 
-const RISK_LABEL_KEY: Record<RiskLevel, string> = {
-  low: 'zone.risk.low',
-  moderate: 'zone.risk.moderate',
-  high: 'zone.risk.high',
-  severe: 'zone.risk.severe'
-}
-
-const RISK_BADGE: Record<RiskLevel, string> = {
-  low: 'bg-risk-low/15 text-risk-low',
-  moderate: 'bg-risk-moderate/15 text-yellow-700',
-  high: 'bg-risk-high/15 text-orange-700',
-  severe: 'bg-risk-severe/15 text-red-700'
-}
-
-// Same source of truth as HeatMap.tsx's RISK_COLOR — kept local since this
-// component only needs it for the accent bar / chart line, not the marker DOM.
 const RISK_ACCENT: Record<RiskLevel, string> = {
   low: '#34D399',
   moderate: '#FBBF24',
@@ -62,11 +46,6 @@ export function ZoneDetailPanel({
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h3 className="font-display text-lg font-semibold">{zone.name}</h3>
-                    <span
-                      className={`risk-color-transition mt-1 inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${RISK_BADGE[zone.risk_level]}`}
-                    >
-                      {t(RISK_LABEL_KEY[zone.risk_level])}
-                    </span>
                   </div>
                   <button
                     onClick={onClose}

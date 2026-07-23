@@ -313,18 +313,6 @@ export function HeatMap({
         </svg>
       )}
 
-      <div className="pointer-events-none absolute bottom-3 left-3 flex gap-2 text-xs">
-        {(["low", "moderate", "high", "severe"] as const).map((r) => (
-          <div
-            key={r}
-            className="flex items-center gap-1.5 rounded-full border border-mist-200 bg-white/90 px-2.5 py-1 shadow-sm backdrop-blur"
-          >
-            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: RISK_COLORS[r] }} />
-            <span className="text-ink-600">{t(LEGEND_KEY[r])}</span>
-          </div>
-        ))}
-      </div>
-
       <style>{`
         @keyframes ambient-pulse {
           0%, 100% { transform: scale(1); opacity: 0.55; }

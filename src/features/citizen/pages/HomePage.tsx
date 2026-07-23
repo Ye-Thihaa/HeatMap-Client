@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { useEffect, useMemo, useState } from 'react'
-import { Sun, Thermometer, Map, Route, Building2, AlertTriangle } from 'lucide-react'
+import { Thermometer, Sun, AlertTriangle } from 'lucide-react'
 import { useHeatZones } from '@/lib/queries'
 import type { HeatZoneSummary, RiskLevel } from '@/lib/types'
 import { useLanguage } from '@/lib/i18n/language-context'
@@ -146,47 +146,6 @@ export function CitizenHomePage() {
         </div>
       </div>
 
-      {/* Heat Alert */}
-      <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4">
-        <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-500" />
-        <div>
-          <p className="text-sm font-semibold text-red-800">Heat Alert</p>
-          <p className="text-sm text-red-700">Avoid outdoor activity from 12 PM – 3 PM.</p>
-        </div>
-      </div>
-
-      {/* Action buttons */}
-      <div className="grid grid-cols-2 gap-3">
-        <Link
-          to="/app"
-          className="flex items-center gap-2 rounded-2xl border border-mist-200 bg-white p-4 shadow-sm transition-colors hover:border-mist-300"
-        >
-          <Map className="h-5 w-5 text-ink-900" />
-          <span className="text-sm font-semibold text-ink-900">View Heat Map</span>
-        </Link>
-        <Link
-          to="/app/cooling-centers"
-          className="flex items-center gap-2 rounded-2xl border border-mist-200 bg-white p-4 shadow-sm transition-colors hover:border-mist-300"
-        >
-          <Route className="h-5 w-5 text-ink-900" />
-          <span className="text-sm font-semibold text-ink-900">Find Cool Route</span>
-        </Link>
-        <Link
-          to="/app/cooling-centers"
-          className="flex items-center gap-2 rounded-2xl border border-mist-200 bg-white p-4 shadow-sm transition-colors hover:border-mist-300"
-        >
-          <Building2 className="h-5 w-5 text-ink-900" />
-          <span className="text-sm font-semibold text-ink-900">Nearby Cooling Centers</span>
-        </Link>
-        <Link
-          to="/app"
-          className="flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 p-4 shadow-sm transition-colors hover:border-red-300"
-        >
-          <AlertTriangle className="h-5 w-5 text-red-500" />
-          <span className="text-sm font-semibold text-red-700">SOS</span>
-        </Link>
-      </div>
-
       {/* AI daily summary */}
       <div className="rounded-2xl border border-mist-200 bg-white p-5 shadow-sm">
         <div className="flex items-center gap-1.5">
@@ -211,13 +170,21 @@ export function CitizenHomePage() {
             <div className="h-3 w-4/5 animate-pulse rounded bg-mist-100" />
           </div>
         )}
+
+        <div className="mt-4 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-3">
+          <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-500" />
+          <div>
+            <p className="text-xs font-semibold text-red-800">Heat Alert</p>
+            <p className="text-xs text-red-700">Avoid outdoor activity from 12 PM – 3 PM.</p>
+          </div>
+        </div>
       </div>
 
       {/* Zones strip */}
       <div className="rounded-2xl border border-mist-200 bg-white p-4 shadow-sm">
         <div className="flex items-center justify-between">
           <p className="font-display text-sm font-semibold">{t('home.zonesNearYou')}</p>
-          <Link to="/app" className="flex items-center gap-0.5 text-xs font-medium text-emerald-500">
+          <Link to="/app/map" className="flex items-center gap-0.5 text-xs font-medium text-emerald-500">
             View map <ChevronRightIcon />
           </Link>
         </div>
@@ -228,19 +195,20 @@ export function CitizenHomePage() {
             ))}
           {!isLoading &&
             zones.slice(0, 8).map((zone) => {
-              const zoneMeta = riskMeta[zone.risk_level]
+              const temp = Math.round(zone.current_temp_c)
+              const badgeColor = temp >= 36 ? 'bg-red-100 text-red-600' : temp >= 32 ? 'bg-amber-100 text-amber-600' : 'bg-sky-100 text-sky-600'
               return (
-                <div
-                  key={zone.id}
-                  className="flex w-16 flex-shrink-0 flex-col items-center gap-1.5 rounded-xl bg-mist-50 py-3"
-                >
-                  <span className="w-full truncate px-1 text-center text-[11px] font-medium text-ink-600">
-                    {zone.name}
+                  <div
+                    key={zone.id}
+                    className="flex w-20 flex-shrink-0 flex-col items-center gap-1.5 rounded-xl bg-mist-50 py-3"
+                  >
+                    <span className="w-full px-1 text-center text-[11px] font-medium leading-tight text-ink-600">
+                      {zone.name}
+                    </span>
+                  <span className={`grid h-8 w-8 place-items-center rounded-full ${badgeColor}`}>
+                    <Thermometer className="h-4 w-4" />
                   </span>
-                  <span className={`grid h-8 w-8 place-items-center rounded-full ${zoneMeta.soft}`}>
-                    <Thermometer className={`h-4 w-4 ${zoneMeta.text}`} />
-                  </span>
-                  <span className="text-sm font-semibold text-ink-900">{Math.round(zone.current_temp_c)}°</span>
+                  <span className="text-sm font-semibold text-ink-900">{temp}°</span>
                 </div>
               )
             })}
