@@ -50,6 +50,51 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>
 }
 
+// --- New types for hospitals / routing / assistant ---
+// NOTE: these would normally live in ./types alongside the others — added
+// here instead since that file wasn't available to edit directly. Worth
+// moving into types.ts for consistency when convenient.
+export interface Hospital {
+  id: string
+  name: string
+  lat: number
+  lng: number
+  emergency?: boolean
+  phone?: string | null
+}
+
+export interface RouteDirectionsInput {
+  origin_lat: number
+  origin_lng: number
+  dest_lat: number
+  dest_lng: number
+}
+
+export interface RouteDirectionsResult {
+  distance_m: number
+  duration_s: number
+  geometry: { type: 'LineString'; coordinates: [number, number][] }
+  note: string
+}
+
+export interface AssistantMessageInput {
+  message: string
+  lat?: number | null
+  lng?: number | null
+  history?: { role: 'user' | 'assistant'; text: string }[]
+  language?: 'en' | 'mm'
+}
+
+export interface AssistantMessageResult {
+  reply: string
+  zone_context: {
+    name: string
+    risk_level: RiskLevel
+    current_temp_c: number
+    green_cover_pct: number
+  } | null
+}
+
 export const api = {
   health: () => request<{ status: string }>('/health'),
 
@@ -60,6 +105,23 @@ export const api = {
     request<CoolingCenter[]>(
       `/cooling-centers/nearby?lat=${lat}&lng=${lng}&radius_km=${radiusKm}`
     ),
+
+  getNearbyHospitals: (lat: number, lng: number, radiusKm = 5) =>
+    request<Hospital[]>(
+      `/hospitals/nearby?lat=${lat}&lng=${lng}&radius_km=${radiusKm}`
+    ),
+
+  getRouteDirections: (input: RouteDirectionsInput) =>
+    request<RouteDirectionsResult>('/route/directions', {
+      method: 'POST',
+      body: JSON.stringify(input)
+    }),
+
+  sendAssistantMessage: (input: AssistantMessageInput) =>
+    request<AssistantMessageResult>('/assistant/message', {
+      method: 'POST',
+      body: JSON.stringify(input)
+    }),
 
   submitHeatReport: (input: HeatReportInput) =>
     request<{ id: string }>('/reports', {
