@@ -1,6 +1,6 @@
-import { useEffect, useState, type ComponentType, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useState, type ComponentType, type FormEvent, type ReactNode, useRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Clock, MapPin, Tag, Users, FileText, Bell } from 'lucide-react'
+import { Clock, MapPin, Tag, Users, FileText, Bell, Camera, X } from 'lucide-react'
 import { LocationPinMap } from '../components/report/LocationPinMap'
 import { ChipGroup } from '../components/report/ChipGroup'
 import { SeveritySelector } from '../components/report/SeveritySelector'
@@ -66,6 +66,17 @@ export function ReportGapPage() {
   const [myReports, setMyReports] = useState<MyReport[]>([])
 
   const [now, setNow] = useState(() => new Date())
+
+  const [photo, setPhoto] = useState<string | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => setPhoto(reader.result as string)
+    reader.readAsDataURL(file)
+  }
 
   useEffect(() => {
     setMyReports(loadMyReports())
@@ -259,7 +270,33 @@ export function ReportGapPage() {
                 >
                   {t('report.notify')}
                 </button>
-              </div>
+      </div>
+
+      <div className="flex flex-col items-center gap-3">
+        <div
+          onClick={() => fileRef.current?.click()}
+          className="flex h-48 w-full max-w-xs cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-mist-300 bg-mist-50 transition-colors hover:border-emerald-400 hover:bg-emerald-50"
+        >
+          {photo ? (
+            <div className="relative h-full w-full">
+              <img src={photo} alt="upload" className="h-full w-full rounded-2xl object-cover" />
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setPhoto(null) }}
+                className="absolute right-2 top-2 rounded-full bg-black/50 p-1 text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <>
+              <Camera className="h-10 w-10 text-mist-400" />
+              <span className="text-sm font-medium text-mist-500">Upload photo</span>
+            </>
+          )}
+        </div>
+        <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
+      </div>
 
               <AnimatePresence>
                 {contactMode === 'notify' && (

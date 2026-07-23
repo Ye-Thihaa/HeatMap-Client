@@ -184,7 +184,7 @@ export function CitizenHomePage() {
       <div className="rounded-2xl border border-mist-200 bg-white p-4 shadow-sm">
         <div className="flex items-center justify-between">
           <p className="font-display text-sm font-semibold">{t('home.zonesNearYou')}</p>
-          <Link to="/app" className="flex items-center gap-0.5 text-xs font-medium text-emerald-500">
+          <Link to="/app/map" className="flex items-center gap-0.5 text-xs font-medium text-emerald-500">
             View map <ChevronRightIcon />
           </Link>
         </div>
@@ -198,13 +198,13 @@ export function CitizenHomePage() {
               const temp = Math.round(zone.current_temp_c)
               const badgeColor = temp >= 36 ? 'bg-red-100 text-red-600' : temp >= 32 ? 'bg-amber-100 text-amber-600' : 'bg-sky-100 text-sky-600'
               return (
-                <div
-                  key={zone.id}
-                  className="flex w-16 flex-shrink-0 flex-col items-center gap-1.5 rounded-xl bg-mist-50 py-3"
-                >
-                  <span className="w-full truncate px-1 text-center text-[11px] font-medium text-ink-600">
-                    {zone.name}
-                  </span>
+                  <div
+                    key={zone.id}
+                    className="flex w-20 flex-shrink-0 flex-col items-center gap-1.5 rounded-xl bg-mist-50 py-3"
+                  >
+                    <span className="w-full px-1 text-center text-[11px] font-medium leading-tight text-ink-600">
+                      {zone.name}
+                    </span>
                   <span className={`grid h-8 w-8 place-items-center rounded-full ${badgeColor}`}>
                     <Thermometer className="h-4 w-4" />
                   </span>
