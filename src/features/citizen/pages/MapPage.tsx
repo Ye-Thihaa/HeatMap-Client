@@ -438,7 +438,22 @@ export function CitizenMapPage() {
 
         {!isLoading && (
           <div className="pointer-events-auto">
-            <LiveRiskTicker zones={zones} />
+            {/* FIX: LiveRiskTicker is now clickable — passing
+                onSelectFirstAtRisk wires it to select the hottest
+                currently at-risk zone, which reuses HeatMap's existing
+                selectedZoneId flyTo + highlight ring + floating
+                name/temp label, so tapping the "N zones at high risk"
+                pill visibly points out that zone on the map exactly the
+                same way clicking its marker would. */}
+            <LiveRiskTicker
+              zones={zones}
+              onSelectFirstAtRisk={(zoneId) => {
+                setSelectedHospital(null)
+                setSelectedCenter(null)
+                setZoneFromUserLocation(false)
+                setSelectedZoneId(zoneId)
+              }}
+            />
           </div>
         )}
       </div>
