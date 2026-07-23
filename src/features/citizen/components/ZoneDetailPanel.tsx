@@ -3,6 +3,7 @@ import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'rec
 import { motion, AnimatePresence } from 'framer-motion'
 import type { RiskLevel, HeatZoneDetail } from '@/lib/types'
 import { useLanguage } from '@/lib/i18n/language-context'
+import { API_ROOT } from '@/lib/api-client'
 
 const RISK_ACCENT: Record<RiskLevel, string> = {
   low: '#34D399',
@@ -10,10 +11,6 @@ const RISK_ACCENT: Record<RiskLevel, string> = {
   high: '#FB7A34',
   severe: '#EF4444'
 }
-
-// Same base URL your other live calls (/hospitals/nearby, /route/directions)
-// already hit. Adjust if your backend runs somewhere other than localhost:8000.
-const API_BASE_URL = 'http://localhost:8000'
 
 // --- MOCK DATA (used when dataMode === 'mock') ---
 // Keyed by the same zone-N ids used in CitizenMapPage's MOCK_ZONES, so
@@ -114,7 +111,14 @@ export function ZoneDetailPanel({
     setLiveError(null)
 
     console.log('[ZoneDetailPanel] fetching live zone detail:', zoneId)
-    fetch(`${API_BASE_URL}/heat-zones/${zoneId}`, { signal: controller.signal })
+    // Uses the same environment-aware API_ROOT every other live call in the
+    // app goes through (api-client.ts) — this used to be hardcoded to
+    // http://localhost:8000, which only ever worked on the dev machine
+    // itself. In production, "localhost" resolves to whichever device is
+    // loading the page, not the actual backend server, so every real
+    // visitor (e.g. anyone scanning a QR code) got a silent fetch failure
+    // here specifically, even though every other endpoint worked fine.
+    fetch(`${API_ROOT}/heat-zones/${zoneId}`, { signal: controller.signal })
       .then(async (res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         return res.json()

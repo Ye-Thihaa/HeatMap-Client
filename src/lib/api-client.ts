@@ -24,7 +24,11 @@ export const RISK_COLORS: Record<RiskLevel, string> = {
 }
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ? '' : '/api'
-const API_ROOT = import.meta.env.VITE_API_BASE_URL ?? BASE_URL
+// Exported so other components (e.g. ZoneDetailPanel) can reuse this exact
+// same environment-aware resolution instead of hardcoding their own base
+// URL — that mismatch (a hardcoded http://localhost:8000 elsewhere) is what
+// broke zone details for every visitor who wasn't on the dev machine itself.
+export const API_ROOT = import.meta.env.VITE_API_BASE_URL ?? BASE_URL
 
 class ApiError extends Error {
   status: number
