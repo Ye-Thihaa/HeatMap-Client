@@ -4,7 +4,7 @@ import type { CoolingCenter, HeatZoneSummary } from "@/lib/types";
 import { RISK_COLORS } from "@/lib/api-client";
 import { useGreenerMapStyle } from "../lib/map-style";
 import { useLanguage } from "@/lib/i18n/language-context";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 const LEGEND_KEY = {
   low: "legend.low",
@@ -87,6 +87,15 @@ export function HeatMap({
       : null;
   const validRouteTo =
     routeTo && Number.isFinite(routeTo.lat) && Number.isFinite(routeTo.lng) ? routeTo : null;
+
+  // FIX: the previously-selected zone (used below to render a clear
+  // highlight — ring + floating label — on whichever zone was actually
+  // clicked, instead of only a subtle 5px vs 7px marker size difference
+  // that's easy to miss, especially on a crowded map with many markers.
+  const selectedZone = useMemo(
+    () => validZones.find((z) => z.id === selectedZoneId) ?? null,
+    [validZones, selectedZoneId],
+  );
 
   // IMPORTANT: do NOT average every zone's lat/lng together. Once zones span
   // multiple distant cities (e.g. Yangon + Phoenix), the average lands
@@ -183,39 +192,72 @@ export function HeatMap({
                 onSelectZone?.(z.id);
               }}
             >
-              <button
-                type="button"
-                aria-label={t("map.zoneMarkerAria", {
-                  name: z.name,
-                  risk: t(LEGEND_KEY[z.risk_level]),
-                  temp: z.current_temp_c,
-                })}
-                title={`${z.name} · ${z.current_temp_c}°C`}
-                className={`group relative grid place-items-center rounded-full transition-transform ${
-                  isSelected ? "h-7 w-7 scale-110" : "h-5 w-5 hover:scale-110"
-                }`}
-              >
-                <span
-                  className="pointer-events-none absolute inset-0 rounded-full opacity-60"
-                  style={{
-                    backgroundColor: color,
-                    animation: "ambient-pulse 3s ease-in-out infinite",
-                  }}
-                />
-                {isDanger && (
+              <div className="relative grid place-items-center">
+                {/* FIX: floating name/temp callout above the selected zone.
+                    This is the actual "point out that zone" fix — a subtle
+                    size bump alone was too easy to miss, especially with
+                    several same-colored markers close together. This label
+                    makes it unambiguous which zone is currently selected. */}
+                <AnimatePresence>
+                  {isSelected && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 4, scale: 0.9 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 4, scale: 0.9 }}
+                      transition={{ duration: 0.18 }}
+                      className="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap rounded-full border border-white/60 px-2.5 py-1 text-[11px] font-semibold text-white shadow-lg"
+                      style={{ backgroundColor: color }}
+                    >
+                      {z.name} · {z.current_temp_c}°C
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <button
+                  type="button"
+                  aria-label={t("map.zoneMarkerAria", {
+                    name: z.name,
+                    risk: t(LEGEND_KEY[z.risk_level]),
+                    temp: z.current_temp_c,
+                  })}
+                  title={`${z.name} · ${z.current_temp_c}°C`}
+                  className={`group relative grid place-items-center rounded-full transition-transform ${
+                    isSelected ? "h-8 w-8 scale-110" : "h-5 w-5 hover:scale-110"
+                  }`}
+                >
+                  {/* FIX: a static, non-pulsing outer ring that only shows
+                      when this specific marker is selected — distinct from
+                      the ambient/danger pulses below (which run on EVERY
+                      zone matching their condition, so they never signaled
+                      "this one was clicked" on their own). */}
+                  {isSelected && (
+                    <span
+                      className="pointer-events-none absolute -inset-1.5 rounded-full border-2"
+                      style={{ borderColor: color }}
+                    />
+                  )}
                   <span
-                    className="pointer-events-none absolute inset-0 rounded-full"
+                    className="pointer-events-none absolute inset-0 rounded-full opacity-60"
                     style={{
                       backgroundColor: color,
-                      animation: "danger-pulse 1.6s ease-out infinite",
+                      animation: "ambient-pulse 3s ease-in-out infinite",
                     }}
                   />
-                )}
-                <span
-                  className="relative h-full w-full rounded-full border-2 border-white/80 shadow-lg transition-transform duration-300"
-                  style={{ backgroundColor: color, transformOrigin: "center" }}
-                />
-              </button>
+                  {isDanger && (
+                    <span
+                      className="pointer-events-none absolute inset-0 rounded-full"
+                      style={{
+                        backgroundColor: color,
+                        animation: "danger-pulse 1.6s ease-out infinite",
+                      }}
+                    />
+                  )}
+                  <span
+                    className="relative h-full w-full rounded-full border-2 border-white/80 shadow-lg transition-transform duration-300"
+                    style={{ backgroundColor: color, transformOrigin: "center" }}
+                  />
+                </button>
+              </div>
             </Marker>
           );
         })}
