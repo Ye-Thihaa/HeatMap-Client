@@ -28,7 +28,7 @@ export default {
         },
         // Risk gradient — low to high. Kept intuitive: green -> yellow -> orange -> red.
         risk: {
-          low: '#34D399',
+          low: '#38BDF8',
           moderate: '#FBBF24',
           high: '#FB7A34',
           severe: '#EF4444'

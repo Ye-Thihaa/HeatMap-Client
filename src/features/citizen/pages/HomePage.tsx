@@ -1,31 +1,33 @@
 import { Link } from '@tanstack/react-router'
 import { useEffect, useMemo, useState } from 'react'
-import { Sun, Flame, ChevronRight, Sparkles } from 'lucide-react'
+import { Sun, Thermometer, Map, Route, Building2, AlertTriangle } from 'lucide-react'
 import { useHeatZones } from '@/lib/queries'
 import type { HeatZoneSummary, RiskLevel } from '@/lib/types'
 import { useLanguage } from '@/lib/i18n/language-context'
 import { generateDailySummary } from '../lib/daily-summary'
 
-const DEFAULT_LOCATION = 'Yangon, Myanmar'
+const DEFAULT_LOCATION = 'Hledan, Yangon'
 
 const riskOrder: RiskLevel[] = ['low', 'moderate', 'high', 'severe']
 
-const riskMeta: Record<RiskLevel, { labelKey: string; text: string; bg: string; soft: string; pct: number }> = {
-  low: { labelKey: 'risk.low', text: 'text-risk-low', bg: 'bg-risk-low', soft: 'bg-risk-low/15', pct: 10 },
+const riskMeta: Record<RiskLevel, { labelKey: string; text: string; bg: string; soft: string; pct: number; heroGradient: string }> = {
+  low: { labelKey: 'risk.low', text: 'text-risk-low', bg: 'bg-risk-low', soft: 'bg-risk-low/15', pct: 10, heroGradient: 'from-risk-low/80 via-risk-low to-risk-low/60' },
   moderate: {
     labelKey: 'risk.moderate',
     text: 'text-risk-moderate',
     bg: 'bg-risk-moderate',
     soft: 'bg-risk-moderate/15',
-    pct: 40
+    pct: 40,
+    heroGradient: 'from-risk-moderate/80 via-risk-moderate to-risk-moderate/60'
   },
-  high: { labelKey: 'risk.high', text: 'text-risk-high', bg: 'bg-risk-high', soft: 'bg-risk-high/15', pct: 70 },
+  high: { labelKey: 'risk.high', text: 'text-risk-high', bg: 'bg-risk-high', soft: 'bg-risk-high/15', pct: 70, heroGradient: 'from-risk-high/80 via-risk-high to-risk-high/60' },
   severe: {
     labelKey: 'risk.severe',
     text: 'text-risk-severe',
     bg: 'bg-risk-severe',
     soft: 'bg-risk-severe/15',
-    pct: 95
+    pct: 95,
+    heroGradient: 'from-risk-severe/80 via-risk-severe to-risk-severe/60'
   }
 }
 
@@ -61,9 +63,9 @@ export function CitizenHomePage() {
           )
           const data = await res.json()
           if (data?.address) {
-            const city = data.address.city || data.address.town || data.address.village || data.address.county
-            const country = data.address.country
-            const parts = [city, country].filter(Boolean)
+            const township = data.address.suburb || data.address.town || data.address.neighbourhood || data.address.city_district
+            const city = data.address.city || data.address.town || data.address.county
+            const parts = [township, city].filter(Boolean)
             if (parts.length > 0) setLocationName(parts.join(', '))
           }
         } catch {
@@ -97,14 +99,9 @@ export function CitizenHomePage() {
   )
 
   return (
-    <div className="mx-auto max-w-lg space-y-6 px-5 py-6">
-      <div>
-        <h1 className="font-display text-2xl font-semibold tracking-tight">{t('home.welcome')}</h1>
-        <p className="text-sm text-ink-600">{t('home.subtitle')}</p>
-      </div>
-
-      {/* Hero */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-ink-900 via-risk-high to-risk-severe p-6 text-white shadow-lg">
+    <div className="mx-auto max-w-lg space-y-5 px-5 py-6">
+      {/* Temperature card */}
+      <div className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${meta.heroGradient} p-6 text-white shadow-lg`}>
         <div className="pointer-events-none absolute inset-0 bg-black/10" />
         <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
 
@@ -127,17 +124,73 @@ export function CitizenHomePage() {
         </div>
 
         {hottest && (
-          <p className="relative z-10 mt-4 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-medium backdrop-blur">
-            <Flame className="h-3 w-3" />
-            {t('home.hottestNow', { name: hottest.name, temp: Math.round(hottest.current_temp_c) })}
+          <p className="relative z-10 mt-4 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-0.5 text-[10px] font-medium backdrop-blur">
+            <Thermometer className="h-3 w-3" />
+            Hottest right now: <strong>Sule</strong>, Yangon · {Math.round(hottest.current_temp_c)}°C
           </p>
         )}
+      </div>
+
+      {/* Heat Risk Index */}
+      <div className="rounded-2xl border border-mist-200 bg-white p-4 shadow-sm">
+        <div className="flex items-center gap-2 text-ink-600">
+          <Thermometer className="h-4 w-4" />
+          <p className="text-xs font-medium">{t('home.riskIndex')}</p>
+        </div>
+        <p className={`mt-2 font-display text-2xl font-semibold ${meta.text}`}>{t(meta.labelKey)}</p>
+        <div className="relative mt-3 h-1.5 w-full rounded-full bg-gradient-to-r from-risk-low via-risk-moderate to-risk-severe">
+          <span
+            className="absolute -top-0.5 h-2.5 w-2.5 -translate-x-1/2 rounded-full border-2 border-white bg-ink-900 shadow"
+            style={{ left: `${meta.pct}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Heat Alert */}
+      <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4">
+        <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-500" />
+        <div>
+          <p className="text-sm font-semibold text-red-800">Heat Alert</p>
+          <p className="text-sm text-red-700">Avoid outdoor activity from 12 PM – 3 PM.</p>
+        </div>
+      </div>
+
+      {/* Action buttons */}
+      <div className="grid grid-cols-2 gap-3">
+        <Link
+          to="/app"
+          className="flex items-center gap-2 rounded-2xl border border-mist-200 bg-white p-4 shadow-sm transition-colors hover:border-mist-300"
+        >
+          <Map className="h-5 w-5 text-ink-900" />
+          <span className="text-sm font-semibold text-ink-900">View Heat Map</span>
+        </Link>
+        <Link
+          to="/app/cooling-centers"
+          className="flex items-center gap-2 rounded-2xl border border-mist-200 bg-white p-4 shadow-sm transition-colors hover:border-mist-300"
+        >
+          <Route className="h-5 w-5 text-ink-900" />
+          <span className="text-sm font-semibold text-ink-900">Find Cool Route</span>
+        </Link>
+        <Link
+          to="/app/cooling-centers"
+          className="flex items-center gap-2 rounded-2xl border border-mist-200 bg-white p-4 shadow-sm transition-colors hover:border-mist-300"
+        >
+          <Building2 className="h-5 w-5 text-ink-900" />
+          <span className="text-sm font-semibold text-ink-900">Nearby Cooling Centers</span>
+        </Link>
+        <Link
+          to="/app"
+          className="flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 p-4 shadow-sm transition-colors hover:border-red-300"
+        >
+          <AlertTriangle className="h-5 w-5 text-red-500" />
+          <span className="text-sm font-semibold text-red-700">SOS</span>
+        </Link>
       </div>
 
       {/* AI daily summary */}
       <div className="rounded-2xl border border-mist-200 bg-white p-5 shadow-sm">
         <div className="flex items-center gap-1.5">
-          <Sparkles className="h-4 w-4 text-emerald-500" />
+          <SparklesIcon />
           <p className="text-sm font-semibold text-ink-900">{t('home.outlook')}</p>
           <span className="rounded-full bg-ink-900 px-2 py-0.5 text-[10px] font-medium text-white">
             {t('home.aiTag')}
@@ -160,27 +213,12 @@ export function CitizenHomePage() {
         )}
       </div>
 
-      {/* Stat cards */}
-      <div className="rounded-2xl border border-mist-200 bg-white p-4 shadow-sm">
-        <div className="flex items-center gap-2 text-ink-600">
-          <Flame className="h-4 w-4" />
-          <p className="text-xs font-medium">{t('home.riskIndex')}</p>
-        </div>
-        <p className={`mt-2 font-display text-2xl font-semibold ${meta.text}`}>{t(meta.labelKey)}</p>
-        <div className="relative mt-3 h-1.5 w-full rounded-full bg-gradient-to-r from-risk-low via-risk-moderate to-risk-severe">
-          <span
-            className="absolute -top-0.5 h-2.5 w-2.5 -translate-x-1/2 rounded-full border-2 border-white bg-ink-900 shadow"
-            style={{ left: `${meta.pct}%` }}
-          />
-        </div>
-      </div>
-
       {/* Zones strip */}
       <div className="rounded-2xl border border-mist-200 bg-white p-4 shadow-sm">
         <div className="flex items-center justify-between">
           <p className="font-display text-sm font-semibold">{t('home.zonesNearYou')}</p>
           <Link to="/app" className="flex items-center gap-0.5 text-xs font-medium text-emerald-500">
-            {t('home.viewMap')} <ChevronRight className="h-3 w-3" />
+            View map <ChevronRightIcon />
           </Link>
         </div>
         <div className="mt-3 flex gap-2 overflow-x-auto scrollbar-hide pb-1">
@@ -200,7 +238,7 @@ export function CitizenHomePage() {
                     {zone.name}
                   </span>
                   <span className={`grid h-8 w-8 place-items-center rounded-full ${zoneMeta.soft}`}>
-                    <Flame className={`h-4 w-4 ${zoneMeta.text}`} />
+                    <Thermometer className={`h-4 w-4 ${zoneMeta.text}`} />
                   </span>
                   <span className="text-sm font-semibold text-ink-900">{Math.round(zone.current_temp_c)}°</span>
                 </div>
@@ -211,10 +249,22 @@ export function CitizenHomePage() {
           )}
         </div>
       </div>
-
-      <div className="rounded-2xl border border-dashed border-mist-200 bg-white/60 p-5 text-center text-sm text-ink-600">
-        {t('home.comingSoon')}
-      </div>
     </div>
+  )
+}
+
+function SparklesIcon() {
+  return (
+    <svg className="h-4 w-4 text-emerald-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 14 18.469V19a2 2 0 1 1-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+    </svg>
+  )
+}
+
+function ChevronRightIcon() {
+  return (
+    <svg className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <path d="M5 12h14M12 5l7 7-7 7" />
+    </svg>
   )
 }

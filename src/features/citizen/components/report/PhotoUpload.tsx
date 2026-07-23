@@ -28,28 +28,28 @@ export function PhotoUpload({ photos, onAdd, onRemove, analyzing, analysis }: Pr
         <span className="ml-1 text-xs font-normal text-ink-500">{t('photo.upToThree')}</span>
       </label>
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap justify-center gap-4">
         {photos.map((p) => (
           <div
             key={p.id}
-            className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl border border-mist-200"
+            className="relative h-40 w-40 flex-shrink-0 overflow-hidden rounded-2xl border border-mist-200 shadow-sm"
           >
             <img src={p.previewUrl} alt="" className="h-full w-full object-cover" />
             <button
               type="button"
               onClick={() => onRemove(p.id)}
               aria-label={t('photo.removeAria')}
-              className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full bg-black/60 text-white"
+              className="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-full bg-black/60 text-white"
             >
-              <X className="h-3 w-3" />
+              <X className="h-3.5 w-3.5" />
             </button>
           </div>
         ))}
 
         {canAddMore && (
-          <label className="flex h-20 w-20 flex-shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-mist-300 text-ink-500 transition-colors hover:border-mist-400 hover:bg-mist-50">
-            <Camera className="h-5 w-5" />
-            <span className="text-[10px] font-medium">{t('photo.add')}</span>
+          <label className="flex h-40 w-40 flex-shrink-0 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-mist-300 text-ink-500 transition-colors hover:border-mist-400 hover:bg-mist-50">
+            <Camera className="h-8 w-8" />
+            <span className="text-sm font-medium">{t('photo.add')}</span>
             <input
               type="file"
               accept="image/*"

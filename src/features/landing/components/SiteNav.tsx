@@ -12,9 +12,9 @@ export function SiteNav({ visible = true }: { visible?: boolean }) {
       className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-black/40 backdrop-blur"
     >
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-        <Link to="/" className="flex items-center gap-2 font-display text-lg font-semibold text-white">
-          <Thermometer className="h-5 w-5 text-orange-400" />
-          ThermoCity
+        <Link to="/" className="flex items-center gap-2 font-display text-lg font-semibold text-emerald-500">
+          <Thermometer className="h-5 w-5 text-emerald-400" />
+          A Yate Sitt
         </Link>
         <nav className="flex items-center gap-6 text-sm font-medium text-white/70">
           <Link to="/app/cooling-centers" className="transition-colors hover:text-white">

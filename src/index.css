@@ -73,6 +73,17 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* Myanmar script needs more line-height so text isn't cramped */
+  [lang="my"] p,
+  [lang="my"] li,
+  [lang="my"] h1,
+  [lang="my"] h2,
+  [lang="my"] h3,
+  [lang="my"] span,
+  [lang="my"] div {
+    line-height: 1.8;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
