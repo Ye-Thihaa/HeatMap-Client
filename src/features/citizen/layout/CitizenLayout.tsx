@@ -2,6 +2,7 @@ import { Outlet } from '@tanstack/react-router'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { LanguageProvider } from '@/lib/i18n/language-context'
 import { TopBar } from '../components/TopBar'
+import { SOSButton } from '../components/SOSButton'
 
 export function CitizenLayout() {
   return (
@@ -20,6 +21,7 @@ export function CitizenLayout() {
         <main>
           <Outlet />
         </main>
+        <SOSButton />
         <BottomNav />
       </div>
     </LanguageProvider>
