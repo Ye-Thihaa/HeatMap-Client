@@ -3,7 +3,7 @@ import { translations, type Lang } from './translations'
 
 export type { Lang }
 
-const STORAGE_KEY = 'urban-heat-lang'
+const STORAGE_KEY = 'a-yate-sitt-lang'
 
 interface LanguageContextValue {
   lang: Lang
@@ -37,6 +37,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       } catch {
         // localStorage unavailable — language choice just won't persist
       }
+      document.documentElement.lang = next === 'mm' ? 'my' : 'en'
     }
 
     function t(key: string, params?: Record<string, string | number>): string {

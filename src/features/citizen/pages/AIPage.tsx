@@ -12,7 +12,7 @@ export function AIPage() {
   }
 
   return (
-    <div className="mx-auto flex h-full max-w-lg flex-col">
+    <div className="mx-auto flex min-h-[calc(100dvh-8rem)] max-w-lg flex-col">
       <div className="flex-1 space-y-4 overflow-y-auto px-5 py-6">
         {messages.length === 0 && (
           <p className="pt-20 text-center text-sm text-ink-500">Start a conversation</p>

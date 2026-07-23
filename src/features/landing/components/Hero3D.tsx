@@ -223,7 +223,7 @@ export function Hero3D() {
             transition={{ delay: 0.2 }}
             className="mb-4 rounded-full border-border border border-white/20 bg-emerald-800/40 px-3 py-1 text-xs font-medium uppercase tracking-widest text-white backdrop-blur"
           >
-            AI Urban Heat Intelligence
+            A Yate Sitt — AI Urban Heat Intelligence
           </motion.p>
           <style>{`@keyframes heatGlow{0%,100%{color:#EF4444;text-shadow:0 0 10px rgba(239,68,68,0.6)}50%{color:#F59E0B;text-shadow:0 0 16px rgba(245,158,11,0.7)}}.heat-pulse{animation:heatGlow 1.5s ease-in-out infinite}`}</style>
           <motion.h1

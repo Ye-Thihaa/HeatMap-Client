@@ -13,8 +13,8 @@ export function DashboardLayout() {
     <div className="min-h-screen bg-ink-950 text-mist-100 pb-16">
       <div className="flex">
         <aside className="hidden w-60 shrink-0 border-r border-ink-700/60 px-4 py-6 lg:block">
-          <Link to="/" className="font-display text-base font-semibold tracking-tight text-white">
-            Urban Heat<span className="text-risk-high">.</span>
+          <Link to="/" className="font-display text-base font-semibold tracking-tight text-emerald-500">
+            A Yate Sitt
             <span className="ml-1 text-xs font-normal text-ink-600">gov</span>
           </Link>
           <nav className="mt-8 flex flex-col gap-1">

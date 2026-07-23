@@ -36,7 +36,7 @@ export function LandingPage() {
         </Section>
       </div>
 
-      <Section title="How ThermoCity works" muted>
+      <Section title="How A Yate Sitt works" muted>
         <div className="mt-6 grid gap-6 md:grid-cols-3">
           <Step icon={<Activity />} title="Live data" body="Temperature, canopy, and density streamed per zone and refreshed continuously." index={0} />
           <Step icon={<Brain />} title="AI analysis" body="Models rank risk, prioritize gaps, and estimate the impact of specific interventions." index={1} />
@@ -62,7 +62,7 @@ export function LandingPage() {
       </Section>
 
       <footer className="border-t border-border/60 py-10 text-center text-xs text-slate-400">
-        ThermoCity · demo build · data mocked when API offline
+        A Yate Sitt · demo build · data mocked when API offline
       </footer>
     </div>
   );
